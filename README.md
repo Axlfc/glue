@@ -208,4 +208,4 @@ Las contribuciones son bienvenidas, especialmente para ampliar backends y dialec
 
 ## 📄 Licencia
 
-[MIT](LICENSE) — licencia permisiva estándar para este tipo de herramienta (en la misma línea que `pacaptr` o `upt`, que usan MIT/Apache-2.0).
+[GNU GPL v3](LICENSE)
