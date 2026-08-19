@@ -193,6 +193,15 @@ glue() {
         rollback)
             glue_rollback_system "$@"
             ;;
+        cluster)
+            glue_cluster_sync "$@"
+            ;;
+        audit)
+            glue_audit_security "$@"
+            ;;
+        repair)
+            glue_repair_system "$@"
+            ;;
         webui)
             glue_launch_webui "$@"
             ;;
@@ -216,6 +225,9 @@ glue() {
             echo "  glue export [manifest.lock]"
             echo "  glue sync [manifest.lock]"
             echo "  glue rollback"
+            echo "  glue cluster [node_address]"
+            echo "  glue audit"
+            echo "  glue repair"
             echo "  glue webui [port]"
             echo ""
             echo "Global Flags:"

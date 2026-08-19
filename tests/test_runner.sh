@@ -220,10 +220,10 @@ out_cargo=$(glue_dispatch --provider=cargo install ripgrep)
 assert_equals "cargo install ripgrep" "$out_cargo" "Provider cargo install translation"
 
 out_pip=$(glue_dispatch --provider=pip install requests)
-assert_equals "pip install requests" "$out_pip" "Provider pip install translation"
+assert_equals "pip install requests" "$out_pip" "Provider pip install requests"
 
 out_npm=$(glue_dispatch --provider=npm install typescript)
-assert_equals "npm install -g typescript" "$out_npm" "Provider npm install translation"
+assert_equals "npm install -g typescript" "$out_npm" "Provider npm install typescript"
 
 out_target_docker=$(glue_dispatch --dry-run --target=docker:my_ubuntu install neovim)
 assert_equals "docker exec -it my_ubuntu sudo apt install neovim" "$out_target_docker" "Target docker exec wrapper"
@@ -247,8 +247,8 @@ assert_equals "pre_install_ok" "${HOOK_TRIGGERED:-}" "Plugin pre-install hook ex
 rm -rf /tmp/glue_plugins_test /tmp/glue_plugins_test_config
 
 
-# Test 7: Declarative Sync, Rollback, AI Search & WebUI (v4.0)
-echo "Test Group 7: Declarative Sync, Rollback, AI Search & WebUI"
+# Test 7: Declarative Sync, Rollback, AI Search, Cluster, Audit & Repair (v4.0/v5.0)
+echo "Test Group 7: Declarative Sync, Rollback, AI Search, Cluster, Audit & Repair"
 export GLUE_DIALECT=apt
 export GLUE_ACTIVE_BACKEND=apt
 source "$ROOT_DIR/glue.sh"
@@ -267,6 +267,21 @@ assert_equals "Starting Glue Web UI Dashboard on http://localhost:9090...
 Active Backend: apt
 Active Dialect: apt
 WebUI dry-run server ready." "$webui_out" "glue webui dry-run launch"
+
+cluster_out=$(GLUE_DRY_RUN=true glue cluster node-1)
+assert_equals "[glue-cluster] Initiating cluster package synchronization...
+[glue-cluster] Node target: node-1
+glue export /tmp/cluster_sync.lock" "$cluster_out" "glue cluster execution"
+
+audit_out=$(GLUE_DRY_RUN=true glue audit)
+assert_equals "[glue-audit] Auditing installed packages for security advisories...
+[glue-audit] Scanning packages on backend 'apt' against OSV / CVE advisories...
+glue audit scan --backend=apt" "$audit_out" "glue audit execution"
+
+repair_out=$(GLUE_DRY_RUN=true glue repair)
+assert_equals "[glue-repair] Diagnosing package manager state...
+[glue-repair] Attempting auto-repair on backend 'apt'...
+sudo dpkg --configure -a" "$repair_out" "glue repair execution"
 
 
 # Test 8: Neutral CLI & Dialects

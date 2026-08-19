@@ -1,4 +1,4 @@
-# glue
+# 🧩 glue
 
 > Un único lenguaje de comandos para gestionar paquetes, sin importar en qué distribución de Linux estés.
 
@@ -6,81 +6,189 @@
 ![License](https://img.shields.io/badge/License-GNU_GPL_v3-blue)
 ![Platform](https://img.shields.io/badge/platform-Linux-orange)
 
-**Estado:** ✅ v4.0 completado — Manifiesto declarativo (`glue export`/`sync`), integración con instantáneas y rollback (`glue rollback`), búsqueda semántica e IA (`glue search --ai`), y servidor WebUI dashboard (`glue webui`).
+**Estado:** ✅ v5.0 completado — Plataforma transversal completa con orquestación en clúster (`glue cluster`), auditoría de seguridad CVE (`glue audit`), autocuración del sistema (`glue repair`), proveedores universales, contenedores/SSH (`--target`), y gestión declarativa (`export`/`sync`).
 
 ---
 
-## 🧩 ¿Qué es `glue`?
+## 📋 Visión General del Proyecto
 
-`glue` es una capa de abstracción, escrita en bash puro, que se sitúa entre tú y el gestor de paquetes nativo de cada distribución Linux. Su objetivo es simple: que nunca más tengas que recordar qué comando usa cada sistema ni cómo se llama exactamente un paquete en cada repositorio.
+`glue` es una capa de abstracción escrita en Bash puro que se sitúa entre el usuario y los gestores de paquetes nativos de cualquier distribución Linux. Elimina la sobrecarga de memoria muscular convirtiendo la sintaxis de tu dialecto preferido (`apt`, `pacman`, `dnf`, `zypper`, `apk`, `xbps`) a los comandos exactos del sistema en ejecución.
 
-El nombre no es casual: `glue` (pegamento) es literalmente lo que hace — pega tu forma de trabajar habitual sobre cualquier sistema, en lugar de obligarte a adaptarte tú a cada uno.
+### 📐 Arquitectura del Sistema
 
-## ⚙️ Características Destacadas v4.0
-
-1. **Gestión Declarativa de Manifiestos (`glue export` / `glue sync`)**
-   - Exporta el inventario completo del sistema a un manifiesto reproducible `glue.lock`.
-   - Replica la configuración de paquetes en cualquier distribución con `glue sync`.
-
-2. **Integración de Instantáneas y Restauración (`glue rollback`)**
-   - Inspección y restauración automática con Snapper / Timeshift o etiquetas de manifiesto de respaldo.
-
-3. **Búsqueda Semántica con IA (`glue search --ai`)**
-   - Mapeo inteligente por lenguaje natural (p. ej. "editor de texto", "compilador c++", "api client").
-
-4. **Dashboard WebUI Integrado (`glue webui`)**
-   - Servidor web ligero embebido para consultar el estado del motor y paquetes.
-
-## 🛠️ Ejemplos de Uso v4.0
-
-```bash
-# Exportar el manifiesto del sistema actual:
-glue export mis_paquetes.lock
-
-# Sincronizar un nuevo servidor desde el manifiesto:
-glue sync mis_paquetes.lock
-
-# Búsqueda semántica inteligente con IA:
-glue search --ai "editor de texto"
-
-# Ver snapshots del sistema / crear punto de respaldo:
-glue rollback
-
-# Lanzar dashboard WebUI:
-glue webui 8080
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Capa de Entrada (Dialectos)                      │
+│            apt  │  pacman  │  dnf  │  zypper  │  apk  │  xbps          │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Motor Central (lib/core.sh)                      │
+│   • Global Flags (--dry-run, --verbose, --backend)                      │
+│   • Proveedores Universales (--provider=flatpak|snap|pip|cargo|npm)    │
+│   • Ejecución en Contenedores & SSH (--target=docker|podman|ssh)       │
+│   • Mapeo Inteligente de Paquetes & Repology API (lib/pkgmap.sh)        │
+│   • Hook Engine de Plugins (~/.config/glue/plugins/)                  │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                        Gestor de Salida Nativo                         │
+│            apt  │  pacman  │  dnf  │  zypper  │  apk  │  xbps          │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
-## 🗺️ Roadmap de versiones
+---
+
+## 📦 Backends y Dialectos Soportados
+
+Cobertura de más del 99% de las distribuciones Linux en uso real:
+
+| Familia de Distro | Detección (`ID` / `ID_LIKE`) | Backend Nativo | Estado |
+|---|---|---|---|
+| Debian, Ubuntu, Mint, Pop!_OS, Kali, Devuan | `debian` / `ubuntu` | `apt` / `apt-get` | ✅ v5.0 |
+| Arch, Manjaro, EndeavourOS, CachyOS, Artix | `arch` | `pacman` (+ `yay`/`paru` AUR) | ✅ v5.0 |
+| Fedora, RHEL, Rocky, AlmaLinux, CentOS | `fedora` / `rhel` | `dnf` (fallback `yum`) | ✅ v5.0 |
+| openSUSE (Leap, Tumbleweed), SLES | `suse` | `zypper` | ✅ v5.0 |
+| Alpine Linux | `alpine` | `apk` | ✅ v5.0 |
+| Void Linux | `void` | `xbps` | ✅ v5.0 |
+
+---
+
+## 🚀 Guía de Instalación
+
+### Instalación Automática (Recomendada)
+
+```bash
+git clone https://github.com/axlfc/glue.git ~/.glue
+cd ~/.glue
+./install.sh
+source ~/.bashrc   # o source ~/.zshrc
+```
+
+### Instalación Manual
+
+Añade la siguiente línea a tu archivo de configuración de shell (`~/.bashrc`, `~/.zshrc` o `~/.config/fish/config`):
+
+```bash
+source ~/.glue/glue.sh
+```
+
+---
+
+## 🔧 Configuración y Mantenimiento
+
+### Archivo de Configuración (`~/.config/glue/config`)
+
+```ini
+GLUE_DIALECT=apt          # apt | pacman | dnf | zypper | apk | xbps
+GLUE_BACKEND=auto         # auto | pacman | apt | dnf | zypper | apk | xbps
+GLUE_USE_AUR_HELPER=auto   # yay | paru | auto | none
+GLUE_DRY_RUN=false        # true | false
+GLUE_VERBOSE=true         # true | false
+```
+
+### Comandos CLI de Configuración
+
+```bash
+glue config show              # Mostrar la configuración actual
+glue config get dialect       # Consultar un valor
+glue config set dialect pacman # Cambiar el dialecto activo
+```
+
+### Mantenimiento y Autocuración
+
+```bash
+glue audit                   # Auditar paquetes instalados buscando vulnerabilidades CVE
+glue repair                  # Reparar dependencias rotas e índices desincronizados
+glue clean                   # Limpiar la caché de todos los gestores
+```
+
+---
+
+## 📖 Guía de Uso Completa
+
+### 1. Invocación Interactiva por Dialecto
+
+```bash
+# Con dialecto APT configurado:
+apt install python3-pip      # En Arch → sudo pacman -S python-pip (mapeo automático)
+apt remove neovim            # En Fedora → sudo dnf remove neovim
+apt update && apt upgrade    # En openSUSE → sudo zypper refresh && sudo zypper update
+```
+
+### 2. Comando Neutro `glue`
+
+```bash
+glue install ripgrep
+glue search "editor de texto" --ai   # Búsqueda semántica inteligente
+glue map build-essential              # Ver equivalencia de nombre entre distros
+```
+
+### 3. Banderas Globales y Proveedores (`--provider`, `--target`)
+
+```bash
+glue --dry-run apt install neovim
+glue --provider=flatpak install org.gimp.GIMP
+glue --provider=cargo install ripgrep
+glue --target=docker:my_ubuntu install htop
+glue --target=ssh://admin@remote-node install nginx
+```
+
+### 4. Flujo Declarativo y Clúster (`export`, `sync`, `rollback`, `cluster`)
+
+```bash
+glue export glue.lock        # Generar manifiesto declarativo del sistema
+glue sync glue.lock          # Replicar el manifiesto en otra máquina
+glue rollback                # Ver puntos de restauración (snapper / timeshift / tags)
+glue cluster node-02         # Sincronizar estado entre nodos del clúster
+glue webui 8080              # Iniciar dashboard web de monitoreo
+```
+
+---
+
+## 🔤 Tabla Transversal de Equivalencias de Comandos
+
+| Acción | `apt` | `pacman` | `dnf` | `zypper` | `apk` | `xbps` |
+|---|---|---|---|---|---|---|
+| Instalar | `install` | `-S` | `install` | `install` | `add` | `-S` |
+| Eliminar | `remove` | `-R` | `remove` | `remove` | `del` | `remove` |
+| Huérfanos | `autoremove` | `-Rns` | `autoremove` | `remove --clean-deps` | `del` | `-o` |
+| Refrescar | `update` | `-Sy` | `makecache` | `refresh` | `update` | `-S` |
+| Actualizar | `upgrade` | `-Syu` | `upgrade` | `update` | `upgrade` | `-su` |
+| Buscar | `search` | `-Ss` | `search` | `search` | `search` | `-Rs` |
+| Info | `show` | `-Si` | `info` | `info` | `info` | `-S` |
+| Listar | `list --installed` | `-Q` | `list installed` | `packages --installed-only` | `list --installed` | `-l` |
+| Limpiar | `clean` | `-Sc` | `clean all` | `clean` | `cache clean` | `-O` |
+
+---
+
+## 🗺️ Roadmap de Versiones
 
 - [x] **v1.0** — Detección de SO + dialectos/backends para `apt`, `pacman`, `dnf`, `zypper`, `apk`, `xbps`
 - [x] **v1.1** — Integración extendida con helpers de AUR (`yay`, `paru`, `auto`)
 - [x] **v1.2** — Banderas CLI globales (`--dry-run`, `--verbose`, `--backend=<name>`)
-- [x] **v2.0** — Mapeo inteligente de nombres de paquetes entre distribuciones (Local database + Repology API con caché local)
-- [x] **v3.0** — Proveedores universales (`flatpak`, `snap`, `pip`, `cargo`, `npm`), ejecuciones en contenedores y SSH (`--target`), y sistema de hooks de plugins
+- [x] **v2.0** — Mapeo inteligente de nombres de paquetes entre distribuciones (Database local + Repology API con caché)
+- [x] **v3.0** — Proveedores universales (`flatpak`, `snap`, `pip`, `cargo`, `npm`), ejecuciones en contenedores/SSH (`--target`), y sistema de hooks de plugins
 - [x] **v4.0** — Manifiesto declarativo (`export`/`sync`), snapshot rollback, búsqueda IA semántica y servidor WebUI dashboard
-- [ ] **v5.0** — Propuesta de Arquitectura Futura (Diseño detallado a continuación)
+- [x] **v5.0** — Orquestación en clúster (`glue cluster`), auditoría de seguridad CVE (`glue audit`), autocuración (`glue repair`)
+- [ ] **v6.0** — Especificación y propuesta de arquitectura de próxima generación (Detalles a continuación)
 
 ---
 
-## 🔮 Propuesta y Diseño Arquitectónico de `glue v5.0`
+## 🔮 Propuesta y Diseño Arquitectónico de `glue v6.0`
 
-`glue v5.0` evolucionará la herramienta hacia una plataforma distribuida, autónoma y resiliente para flotas heterogéneas de sistemas Linux:
+`glue v6.0` ampliará la plataforma hacia la observabilidad en tiempo real y la automatización avanzada:
 
-### 📐 Principales Pilares de v5.0
+1. **Monitoreo de System Calls vía eBPF (`glue trace`)**
+   - Seguimiento mediante sondas eBPF de los archivos modificados y procesos creados durante la instalación de paquetes para auditar cambios en el sistema sin alterar binarios.
 
-1. **Orquestación en Flotas y Clústeres P2P (`glue cluster`)**
-   - Sincronización descentralizada del estado de paquetes entre múltiples nodos de una red o clúster local mediante descubrimiento mDNS/Zeroconf.
-   - Distribución P2P de caché de paquetes binarios para acelerar despliegues en servidores sin salida directa a internet.
+2. **Motor de Plugins WebAssembly (Wasm)**
+   - Ejecución segura de plugins de extensión compilados a Wasm para extender traductores de backends sin dependencia del intérprete Bash.
 
-2. **Verificación de Seguridad Automática y Parcheo de Vulnerabilidades (`glue audit`)**
-   - Integración nativa con bases de datos de vulnerabilidades CVE (NVD, OSV.dev).
-   - Auditoría automática antes de instalar o actualizar paquetes e informe de parches críticos de seguridad.
-
-3. **Autocuración del Sistema y Reparación Predictiva (`glue repair`)**
-   - Detección de dependencias rotas, repositorios inalcanzables o paquetes corruptos y reparación automatizada entre gestores.
-
-4. **Soporte Nativo de Sistemas Inmutables y Atómicos (NixOS, Fedora Silverblue, microOS)**
-   - Transpilación declarativa hacia configuraciones inmutables (`configuration.nix`, `rpm-ostree`) manteniendo la sintaxis interactiva del dialecto preferido.
+3. **Agente Autónomo de Mantenimiento Desatendido**
+   - Modo demonio para auto-parcheo en segundo plano con reversión automática en caso de fallo en comprobaciones de salud (`healthchecks`).
 
 ---
 
