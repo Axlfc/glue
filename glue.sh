@@ -226,11 +226,18 @@ glue() {
         sandbox)
             glue_sandbox_run "$@"
             ;;
+        predict)
+            glue_predict_conflicts "$@"
+            ;;
+        microvm)
+            glue_microvm_spawn "$@"
+            ;;
         install|remove|autoremove|update|upgrade|search|show|list|clean)
             if [[ "$cmd" == "list" && "${1:-}" == "--installed" ]]; then
                 shift
                 glue_dispatch "${global_flags[@]}" "list_installed" "$@"
             elif [[ "$cmd" == "list" ]]; then
+                shift
                 glue_dispatch "${global_flags[@]}" "list_installed" "$@"
             else
                 glue_dispatch "${global_flags[@]}" "$cmd" "$@"
@@ -256,6 +263,8 @@ glue() {
             echo "  glue verify [manifest.lock]"
             echo "  glue graph <pkg>"
             echo "  glue sandbox <command...>"
+            echo "  glue predict <pkg...>"
+            echo "  glue microvm <command...>"
             echo "  glue webui [port]"
             echo ""
             echo "Global Flags:"

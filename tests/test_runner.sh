@@ -247,8 +247,8 @@ assert_equals "pre_install_ok" "${HOOK_TRIGGERED:-}" "Plugin pre-install hook ex
 rm -rf /tmp/glue_plugins_test /tmp/glue_plugins_test_config
 
 
-# Test 7: Advanced Subcommands (v4.0 - v8.0)
-echo "Test Group 7: Advanced Subcommands (Sync, AI, WebUI, Cluster, Audit, Repair, Trace, Wasm, Daemon, Build, Verify, Graph, Sandbox)"
+# Test 7: Advanced Subcommands (v4.0 - v9.0)
+echo "Test Group 7: Advanced Subcommands (Sync, AI, WebUI, Cluster, Audit, Repair, Trace, Wasm, Daemon, Build, Verify, Graph, Sandbox, Predict, MicroVM)"
 export GLUE_DIALECT=apt
 export GLUE_ACTIVE_BACKEND=apt
 source "$ROOT_DIR/glue.sh"
@@ -309,6 +309,14 @@ glue-dep-graph --resolve neovim" "$graph_out" "glue graph dry-run execution"
 sandbox_out=$(GLUE_DRY_RUN=true glue sandbox apt install neovim)
 assert_equals "[glue-sandbox] Initializing unshare/chroot ephemeral sandbox environment...
 unshare --user --map-root-user -- apt install neovim" "$sandbox_out" "glue sandbox dry-run execution"
+
+predict_out=$(GLUE_DRY_RUN=true glue predict python3)
+assert_equals "[glue-predict] Running neural network heuristic conflict prediction for: python3...
+glue-nn-predict --check python3" "$predict_out" "glue predict dry-run execution"
+
+microvm_out=$(GLUE_DRY_RUN=true glue microvm apt install neovim)
+assert_equals "[glue-microvm] Spawning Firecracker microVM isolated test environment...
+firecracker-spawn --exec apt install neovim" "$microvm_out" "glue microvm dry-run execution"
 
 rm -f "$manifest_file"
 
