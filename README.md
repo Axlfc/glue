@@ -3,7 +3,7 @@
 > Un único lenguaje de comandos para gestionar paquetes, sin importar en qué distribución de Linux estés.
 
 ![Bash](https://img.shields.io/badge/bash-%3E%3D4.0-4EAA25?logo=gnubash&logoColor=white)
-![License](https://img.shields.io/badge/license-MIT-blue)
+![License](https://img.shields.io/badge/License-GNU_GPL_v3-blue)
 ![Platform](https://img.shields.io/badge/platform-Linux-orange)
 
 **Estado:** 🚧 en fase de diseño — este README define la arquitectura y el alcance de la v1. La implementación en `bash` está en marcha.
