@@ -108,6 +108,30 @@ detected=$(glue_detect_system)
 assert_equals "xbps" "$detected" "Detect Void Linux -> xbps"
 rm -f "$void_release"
 
+# Mock Gentoo os-release
+gentoo_release="/tmp/os_release_gentoo"
+echo 'ID=gentoo' > "$gentoo_release"
+GLUE_OS_RELEASE="$gentoo_release"
+detected=$(glue_detect_system)
+assert_equals "emerge" "$detected" "Detect Gentoo Linux -> emerge"
+rm -f "$gentoo_release"
+
+# Mock Solus os-release
+solus_release="/tmp/os_release_solus"
+echo 'ID=solus' > "$solus_release"
+GLUE_OS_RELEASE="$solus_release"
+detected=$(glue_detect_system)
+assert_equals "eopkg" "$detected" "Detect Solus -> eopkg"
+rm -f "$solus_release"
+
+# Mock NixOS os-release
+nix_release="/tmp/os_release_nix"
+echo 'ID=nixos' > "$nix_release"
+GLUE_OS_RELEASE="$nix_release"
+detected=$(glue_detect_system)
+assert_equals "nix" "$detected" "Detect NixOS -> nix"
+rm -f "$nix_release"
+
 
 # Test 3: Backend Translation (Dry Run mode)
 echo "Test Group 3: Backend Translation & Dispatch (Dry Run)"

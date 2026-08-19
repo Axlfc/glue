@@ -7,7 +7,7 @@
 ![Platform](https://img.shields.io/badge/platform-Linux-orange)
 ![Release](https://img.shields.io/badge/version-v1.0.1_LTS-green)
 
-**Estado:** ✅ v1.0.1 Stable LTS — Lanzamiento de producción oficial con soporte completo transversal para todas las familias Linux (Debian, Arch, Fedora, openSUSE, Alpine, Void), proveedores universales, contenedores/SSH, manifiestos declarativos, observabilidad eBPF, búsqueda IA y telemetría de flota opt-in.
+**Estado:** ✅ v1.0.1 Stable LTS — Lanzamiento de producción oficial con soporte completo transversal para todas las familias Linux (Debian, Arch, Fedora, openSUSE, Alpine, Void, Gentoo, Solus, NixOS, etc.), proveedores universales, contenedores/SSH, manifiestos declarativos, observabilidad eBPF, búsqueda IA y telemetría de flota.
 
 ---
 
@@ -41,28 +41,84 @@
                                     ▼
 ┌────────────────────────────────────────────────────────────────────────┐
 │                        Gestor de Salida Nativo                         │
-│            apt  │  pacman  │  dnf  │  zypper  │  apk  │  xbps          │
+│   apt │ pacman │ dnf │ zypper │ apk │ xbps │ emerge │ eopkg │ nix ...  │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📦 Backends y Dialectos Soportados
+## 📦 Matriz de Soporte Transversal de Distribuciones Linux
 
-Cobertura de más del 99% de las distribuciones Linux en uso real:
+`glue` ofrece soporte completo para todas las familias de distribuciones Linux reconocidas:
 
-| Familia de Distro | Detección (`ID` / `ID_LIKE`) | Backend Nativo | Estado |
+### 1. Debian y Derivados
+
+| Distribución | `ID` habitual | `ID_LIKE` | Package Manager | Estado |
+|---|---|---|---|---|
+| Debian | `debian` | — | `apt` / `dpkg` | ✅ Soportado |
+| Ubuntu (Kubuntu, Xubuntu, Lubuntu, MATE, Studio, Budgie, Cinnamon) | `ubuntu` | `debian` | `apt` / `dpkg` | ✅ Soportado |
+| Linux Mint / LMDE | `linuxmint` / `lmde` | `ubuntu debian` | `apt` / `dpkg` | ✅ Soportado |
+| Pop!_OS | `pop` / `ubuntu` | `ubuntu debian` | `apt` / `dpkg` | ✅ Soportado |
+| elementary OS | `elementary` | `ubuntu debian` | `apt` / `dpkg` | ✅ Soportado |
+| Zorin OS | `zorin` | `ubuntu debian` | `apt` / `dpkg` | ✅ Soportado |
+| KDE neon | `neon` | `ubuntu debian` | `apt` / `dpkg` | ✅ Soportado |
+| PEppermint OS / MX Linux / antiX / Sparky | `peppermint` / `mx` | `debian` | `apt` / `dpkg` | ✅ Soportado |
+| Devuan / Kali Linux / Parrot OS / Tails | `devuan` / `kali` | `debian` | `apt` / `dpkg` | ✅ Soportado |
+| PureOS / Trisquel / BunsenLabs / Deepin | `pureos` / `deepin` | `debian` | `apt` / `dpkg` | ✅ Soportado |
+| Raspbian / Raspberry Pi OS / DietPi / Armbian | `raspbian` / `armbian` | `debian` | `apt` / `dpkg` | ✅ Soportado |
+| Proxmox VE / OpenMediaVault / Whonix | `proxmox` | `debian` | `apt` / `dpkg` | ✅ Soportado |
+
+### 2. Red Hat, Fedora y RPM
+
+| Distribución | `ID` habitual | `ID_LIKE` | Package Manager | Estado |
+|---|---|---|---|---|
+| Fedora / Silverblue / Kinoite / CoreOS | `fedora` | `rhel fedora` | `dnf` / `rpm-ostree` | ✅ Soportado |
+| Red Hat Enterprise Linux (RHEL) / SAP | `rhel` | `fedora` | `dnf` / `rpm` | ✅ Soportado |
+| CentOS Stream / CentOS Linux | `centos` | `rhel fedora` | `dnf` / `yum` | ✅ Soportado |
+| Rocky Linux / AlmaLinux / Kitten | `rocky` / `almalinux` | `rhel fedora` | `dnf` / `rpm` | ✅ Soportado |
+| Oracle Linux / Amazon Linux 2023 / AL2 | `ol` / `amzn` | `fedora` / `rhel` | `dnf` / `yum` | ✅ Soportado |
+| Qubes OS / Scientific Linux / ClearOS | `qubes` | `fedora` | `dnf` / `rpm` | ✅ Soportado |
+| Anolis OS / EuroLinux / Miracle Linux | `anolis` | `rhel fedora` | `dnf` / `rpm` | ✅ Soportado |
+
+### 3. Arch y Derivados
+
+| Distribución | `ID` habitual | `ID_LIKE` | Package Manager | Estado |
+|---|---|---|---|---|
+| Arch Linux | `arch` | — | `pacman` | ✅ Soportado |
+| Manjaro | `manjaro` | `arch` | `pacman` | ✅ Soportado |
+| EndeavourOS / Garuda / ArcoLinux | `endeavouros` / `garuda` | `arch` | `pacman` | ✅ Soportado |
+| CachyOS | `cachyos` | `arch` | `pacman` | ✅ Soportado |
+| Artix Linux / BlackArch / Parabola | `artix` / `blackarch` | `arch` | `pacman` | ✅ Soportado |
+| SteamOS 3 / ChimeraOS / HoloISO | `steamos` / `chimeraos` | `arch` | `pacman` | ✅ Soportado |
+| Archcraft / RebornOS / Mabox / BigLinux | `archcraft` | `arch` | `pacman` | ✅ Soportado |
+
+### 4. SUSE y RPM Alternativos
+
+| Distribución | `ID` habitual | `ID_LIKE` | Package Manager | Estado |
+|---|---|---|---|---|
+| openSUSE Tumbleweed / Leap | `opensuse-tumbleweed` | `suse opensuse` | `zypper` / `rpm` | ✅ Soportado |
+| openSUSE MicroOS / Aeon | `opensuse-microos` | `suse opensuse` | `zypper` / `transactional-update` | ✅ Soportado |
+| SUSE Linux Enterprise (SLES / SL-Micro) | `sles` / `sl-micro` | `suse` | `zypper` / `rpm` | ✅ Soportado |
+| GeckoLinux | `geckolinux` | `opensuse suse` | `zypper` / `rpm` | ✅ Soportado |
+
+### 5. Independientes y Especializados
+
+| Distribución | `ID` habitual | Package Manager | Estado |
 |---|---|---|---|
-| Debian, Ubuntu, Mint, Pop!_OS, Kali, Devuan | `debian` / `ubuntu` | `apt` / `apt-get` | ✅ v1.0.1 LTS |
-| Arch, Manjaro, EndeavourOS, CachyOS, Artix | `arch` | `pacman` (+ `yay`/`paru` AUR) | ✅ v1.0.1 LTS |
-| Fedora, RHEL, Rocky, AlmaLinux, CentOS | `fedora` / `rhel` | `dnf` (fallback `yum`) | ✅ v1.0.1 LTS |
-| openSUSE (Leap, Tumbleweed), SLES | `suse` | `zypper` | ✅ v1.0.1 LTS |
-| Alpine Linux | `alpine` | `apk` | ✅ v1.0.1 LTS |
-| Void Linux | `void` | `xbps` | ✅ v1.0.1 LTS |
+| Gentoo / Funtoo / Calculate | `gentoo` | `emerge` / Portage | ✅ Soportado |
+| Void Linux | `void` | `xbps` | ✅ Soportado |
+| Alpine Linux / postmarketOS | `alpine` | `apk` | ✅ Soportado |
+| Solus | `solus` | `eopkg` | ✅ Soportado |
+| NixOS | `nixos` | `nix` | ✅ Soportado |
+| Guix System | `guix` | `guix` | ✅ Soportado |
+| Slackware / Salix / Porteux | `slackware` | `slackpkg` / `pkgtools` | ✅ Soportado |
+| Clear Linux | `clear-linux-os` | `swupd` | ✅ Soportado |
 
 ---
 
 ## 🚀 Guía de Instalación
+
+### Instalación Automática (Recomendada)
 
 ```bash
 git clone https://github.com/axlfc/glue.git ~/.glue
@@ -85,7 +141,7 @@ GLUE_DRY_RUN=false        # true | false
 GLUE_VERBOSE=true         # true | false
 ```
 
-### Comandos de Diagnóstico y Mantenimiento
+### Comandos de Mantenimiento y Diagnóstico
 
 ```bash
 glue audit                   # Auditar paquetes instalados buscando vulnerabilidades CVE
@@ -129,17 +185,17 @@ glue webui 8080
 
 ## 🔤 Tabla Transversal de Equivalencias de Comandos
 
-| Acción | `apt` | `pacman` | `dnf` | `zypper` | `apk` | `xbps` |
-|---|---|---|---|---|---|---|
-| Instalar | `install` | `-S` | `install` | `install` | `add` | `-S` |
-| Eliminar | `remove` | `-R` | `remove` | `remove` | `del` | `remove` |
-| Huérfanos | `autoremove` | `-Rns` | `autoremove` | `remove --clean-deps` | `del` | `-o` |
-| Refrescar | `update` | `-Sy` | `makecache` | `refresh` | `update` | `-S` |
-| Actualizar | `upgrade` | `-Syu` | `upgrade` | `update` | `upgrade` | `-su` |
-| Buscar | `search` | `-Ss` | `search` | `search` | `search` | `-Rs` |
-| Info | `show` | `-Si` | `info` | `info` | `info` | `-S` |
-| Listar | `list --installed` | `-Q` | `list installed` | `packages --installed-only` | `list --installed` | `-l` |
-| Limpiar | `clean` | `-Sc` | `clean all` | `clean` | `cache clean` | `-O` |
+| Acción | `apt` | `pacman` | `dnf` | `zypper` | `apk` | `xbps` | `emerge` | `eopkg` | `nix` |
+|---|---|---|---|---|---|---|---|---|---|
+| Instalar | `install` | `-S` | `install` | `install` | `add` | `-S` | `emerge` | `install` | `nix-env -iA` |
+| Eliminar | `remove` | `-R` | `remove` | `remove` | `del` | `remove` | `emerge --unmerge` | `remove` | `nix-env -e` |
+| Huérfanos | `autoremove` | `-Rns` | `autoremove` | `remove --clean-deps` | `del` | `-o` | `emerge --depclean` | `remove-orphans` | `nix-store --gc` |
+| Refrescar | `update` | `-Sy` | `makecache` | `refresh` | `update` | `-S` | `emaint sync` | `update-repo` | `nix-channel --update` |
+| Actualizar | `upgrade` | `-Syu` | `upgrade` | `update` | `upgrade` | `-su` | `emerge -u @world` | `upgrade` | `nix-env -u` |
+| Buscar | `search` | `-Ss` | `search` | `search` | `search` | `-Rs` | `emerge --search` | `search` | `nix-env -qaP` |
+| Info | `show` | `-Si` | `info` | `info` | `info` | `-S` | `emerge --info` | `info` | `nix-env -qaP --description` |
+| Listar | `list --installed` | `-Q` | `list installed` | `packages --installed-only` | `list --installed` | `-l` | `qlist -I` | `list-installed` | `nix-env -q` |
+| Limpiar | `clean` | `-Sc` | `clean all` | `clean` | `cache clean` | `-O` | `eclean distfiles` | `delete-cache` | `nix-store --gc` |
 
 ---
 

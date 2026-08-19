@@ -14,6 +14,9 @@ source "$GLUE_DIR/lib/backends/dnf.sh"
 source "$GLUE_DIR/lib/backends/zypper.sh"
 source "$GLUE_DIR/lib/backends/apk.sh"
 source "$GLUE_DIR/lib/backends/xbps.sh"
+source "$GLUE_DIR/lib/backends/emerge.sh" 2>/dev/null || true
+source "$GLUE_DIR/lib/backends/eopkg.sh" 2>/dev/null || true
+source "$GLUE_DIR/lib/backends/nix.sh" 2>/dev/null || true
 source "$GLUE_DIR/lib/core.sh"
 
 # Sourcing dialect wrappers
