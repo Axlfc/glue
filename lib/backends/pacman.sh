@@ -1,21 +1,30 @@
 #!/usr/bin/env bash
-# lib/backends/pacman.sh - Pacman backend for glue
+# lib/backends/pacman.sh - Pacman & AUR helper backend for glue
 
 glue_backend_pacman() {
     local action="$1"
     shift
 
-    local aur_helper="${GLUE_USE_AUR_HELPER:-yay}"
+    local aur_setting="${GLUE_USE_AUR_HELPER:-yay}"
     local bin="pacman"
     local use_sudo="true"
 
-    # Check if configured AUR helper is available
-    if [[ "$aur_helper" == "yay" ]] && command -v yay >/dev/null 2>&1; then
-        bin="yay"
-        use_sudo="false" # yay handles sudo escalation internally
-    elif [[ "$aur_helper" == "paru" ]] && command -v paru >/dev/null 2>&1; then
-        bin="paru"
-        use_sudo="false" # paru handles sudo escalation internally
+    if [[ "$aur_setting" != "none" ]]; then
+        if [[ "$aur_setting" == "yay" ]] && command -v yay >/dev/null 2>&1; then
+            bin="yay"
+            use_sudo="false"
+        elif [[ "$aur_setting" == "paru" ]] && command -v paru >/dev/null 2>&1; then
+            bin="paru"
+            use_sudo="false"
+        elif [[ "$aur_setting" == "auto" ]]; then
+            if command -v yay >/dev/null 2>&1; then
+                bin="yay"
+                use_sudo="false"
+            elif command -v paru >/dev/null 2>&1; then
+                bin="paru"
+                use_sudo="false"
+            fi
+        fi
     fi
 
     GLUE_CMD_SUDO="$use_sudo"
@@ -35,11 +44,9 @@ glue_backend_pacman() {
                 local orphans
                 orphans=$("$bin" -Qtdq 2>/dev/null || true)
                 if [[ -n "$orphans" ]]; then
-                    # Read orphans into array
                     read -r -a orphan_array <<< "$orphans"
                     GLUE_CMD_ARGS=("$bin" "-Rns" "${orphan_array[@]}")
                 else
-                    # No orphans found
                     GLUE_CMD_ARGS=("echo" "No orphaned packages to remove.")
                     GLUE_CMD_SUDO="false"
                 fi

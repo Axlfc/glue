@@ -2,14 +2,69 @@
 # lib/core.sh - Execution engine for glue
 
 glue_dispatch() {
-    local action="$1"
-    shift
-
-    # Load configuration and resolve backend if not already done
+    # Load configuration
     glue_load_config
+
+    local dry_run_override=""
+    local verbose_override=""
+    local backend_override=""
+    local clean_args=()
+
+    # Parse global options passed as arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --dry-run)
+                dry_run_override="true"
+                shift
+                ;;
+            --verbose|-v)
+                verbose_override="true"
+                shift
+                ;;
+            --backend=*)
+                backend_override="${1#*=}"
+                shift
+                ;;
+            *)
+                clean_args+=("$1")
+                shift
+                ;;
+        esac
+    done
+
+    # Restore positional arguments without global flags
+    set -- "${clean_args[@]}"
+
+    local action="${1:-}"
+    shift 2>/dev/null || true
+
+    if [[ -z "$action" ]]; then
+        echo "Error: No action specified for glue dispatch." >&2
+        return 1
+    fi
+
+    # Apply overrides if provided
+    if [[ -n "$dry_run_override" ]]; then
+        GLUE_DRY_RUN="$dry_run_override"
+    fi
+    if [[ -n "$verbose_override" ]]; then
+        GLUE_VERBOSE="$verbose_override"
+    fi
+    if [[ -n "$backend_override" ]]; then
+        GLUE_BACKEND="$backend_override"
+    fi
+
     glue_resolve_backend || return 1
 
     local backend="$GLUE_ACTIVE_BACKEND"
+
+    # Package name mapping hook (v2.0)
+    local target_pkgs=()
+    if declare -f glue_map_packages >/dev/null 2>&1 && [[ "$action" =~ ^(install|remove|show|search)$ ]]; then
+        read -r -a target_pkgs <<< "$(glue_map_packages "$backend" "$@")"
+        set -- "${target_pkgs[@]}"
+    fi
+
     local backend_fn="glue_backend_${backend}"
 
     if ! declare -f "$backend_fn" >/dev/null 2>&1; then

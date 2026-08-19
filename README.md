@@ -6,13 +6,13 @@
 ![License](https://img.shields.io/badge/License-GNU_GPL_v3-blue)
 ![Platform](https://img.shields.io/badge/platform-Linux-orange)
 
-**Estado:** ✅ v1.0 disponible — Implementación completa de la capa de abstracción en `bash`.
+**Estado:** ✅ v2.0 completado — Mapeo inteligente de paquetes entre distros + Integración con Repology + Soporte de flags globales y AUR helpers.
 
 ---
 
 ## 🧩 ¿Qué es `glue`?
 
-`glue` es una capa de abstracción, escrita en bash puro, que se sitúa entre tú y el gestor de paquetes nativo de cada distribución Linux. Su objetivo es simple: que nunca más tengas que recordar qué comando usa cada sistema.
+`glue` es una capa de abstracción, escrita en bash puro, que se sitúa entre tú y el gestor de paquetes nativo de cada distribución Linux. Su objetivo es simple: que nunca más tengas que recordar qué comando usa cada sistema ni cómo se llama exactamente un paquete en cada repositorio.
 
 El nombre no es casual: `glue` (pegamento) es literalmente lo que hace — pega tu forma de trabajar habitual sobre cualquier sistema, en lugar de obligarte a adaptarte tú a cada uno.
 
@@ -28,172 +28,110 @@ Cada familia de distribuciones trae su propio gestor de paquetes, con su propia 
 - **Void Linux** → `xbps`
 - **Gentoo** → `emerge`
 
-El resultado es memoria muscular rota constantemente: `apt install` no existe en Arch, `pacman -S` no existe en Debian, y cada vez que saltas entre tu portátil, un servidor, un contenedor o una VPS, pierdes segundos (y paciencia) recordando la sintaxis correcta. Las soluciones habituales — chuletas mentales, dotfiles con alias mantenidos a mano y sincronizados entre máquinas — son parches, no soluciones.
+El resultado es memoria muscular rota constantemente: `apt install` no existe en Arch, `pacman -S` no existe en Debian, y los nombres de paquete difieren (`python3-pip` en Ubuntu vs `python-pip` en Arch; `build-essential` vs `base-devel`). `glue` resuelve tanto la sintaxis de comandos como la equivalencia de nombres.
 
 ## ⚙️ Cómo funciona
 
 1. **Detección del sistema.** Al cargar `glue`, se parsean los campos `ID` e `ID_LIKE` de `/etc/os-release` para identificar tanto la distribución exacta como su familia.
-2. **Resolución del backend.** Con la distro identificada, `glue` comprueba qué gestor de paquetes nativo está realmente disponible en el `$PATH` — no basta con saber la distro en teoría, se verifica el binario en la práctica.
-3. **Elección de dialecto.** Configuras una vez qué sintaxis quieres usar (tu "dialecto": `apt`, `pacman`, `dnf`...). No tiene por qué coincidir con el backend real de la máquina en la que estás — de hecho, ese es precisamente el punto.
-4. **Traducción y ejecución.** `glue` define funciones de shell que interceptan los verbos de tu dialecto (`install`, `remove`, `update`, `search`...) y los traducen a la invocación real del backend nativo, incluyendo matices como la distinción entre refrescar metadatos y actualizar paquetes.
+2. **Resolución del backend.** Con la distro identificada, `glue` comprueba qué gestor de paquetes nativo está realmente disponible en el `$PATH` (incluyendo helpers de AUR como `yay` o `paru`).
+3. **Mapeo inteligente de nombres de paquete (v2.0).** `glue` traduce automáticamente el nombre del paquete entre repositorios (vía diccionario local estático o mediante consulta en tiempo real con caché a la API de **Repology**).
+4. **Elección de dialecto.** Configuras una vez qué sintaxis quieres usar (tu "dialecto": `apt`, `pacman`, `dnf`...).
+5. **Traducción y ejecución.** `glue` intercepta los verbos y flags (`install`, `remove`, `update`, `search`...) y los traduce a la invocación real del backend nativo.
 
 ```
 ┌──────────────┐     ┌──────────────────┐     ┌───────────────────┐     ┌──────────────────┐
-│   Tú          │ --> │  Tu dialecto      │ --> │   Motor de glue    │ --> │  Backend nativo   │
-│ "apt install" │     │  (sintaxis apt)   │     │ (traducción según  │     │ (pacman, dnf,     │
-│               │     │                   │     │  el sistema real)  │     │  zypper, apk...)  │
+│   Tú          │ --> │  Tu dialecto      │ --> │  Motor de glue    │ --> │  Backend nativo   │
+│ "apt install" │     │  (sintaxis apt)   │     │ (Mapeo de paquete │     │ (pacman, dnf,     │
+│               │     │                   │     │  y traducción)    │     │  zypper, apk...)  │
 └──────────────┘     └──────────────────┘     └───────────────────┘     └──────────────────┘
-                                                          ▲
-                                                          │
-                                                 /etc/os-release
-                                                  (ID, ID_LIKE)
 ```
-
-Extracto ilustrativo de la lógica de detección (`lib/detect.sh`):
-
-```bash
-source /etc/os-release
-
-case "$ID" in
-  arch|manjaro|endeavouros|cachyos)  GLUE_BACKEND="pacman" ;;
-  debian|ubuntu|linuxmint|pop)       GLUE_BACKEND="apt"    ;;
-  fedora|rhel|rocky|almalinux)       GLUE_BACKEND="dnf"    ;;
-  opensuse*|sles)                    GLUE_BACKEND="zypper" ;;
-  alpine)                            GLUE_BACKEND="apk"    ;;
-  void)                              GLUE_BACKEND="xbps"   ;;
-  *)
-    # Fallback para derivadas no listadas explícitamente
-    case "$ID_LIKE" in
-      *arch*)           GLUE_BACKEND="pacman" ;;
-      *debian*|*ubuntu*) GLUE_BACKEND="apt"   ;;
-      *fedora*|*rhel*)  GLUE_BACKEND="dnf"    ;;
-      *suse*)           GLUE_BACKEND="zypper" ;;
-      *alpine*)         GLUE_BACKEND="apk"    ;;
-      *void*)           GLUE_BACKEND="xbps"   ;;
-      *)                GLUE_BACKEND=""       ;; # no detectado
-    esac
-    ;;
-esac
-```
-
-> **Nota real:** confiar solo en `ID_LIKE` no siempre es suficiente. Durante 2025 y principios de 2026 se reportó en varios proyectos (`topgrade`, `lynis`, scripts de compilación de AUR) que las instalaciones de CachyOS no incluían `ID_LIKE=arch` en `/etc/os-release`, lo que rompía la detección basada únicamente en ese campo. Por eso `glue` lista explícitamente los `ID` conocidos de las principales derivadas — como `cachyos` — en lugar de depender solo del fallback por `ID_LIKE`.
-
-Una propiedad importante por diseño: si tu dialecto coincide con el backend nativo, `glue` no genera ningún alias. Por ejemplo, en CachyOS, si eliges `pacman` como dialecto, `pacman` sigue siendo exactamente el binario real — `glue` solo entra en acción para los comandos que no son nativos del sistema en el que estás.
 
 ## 📦 Backends soportados
 
-Cobertura de más del 99% de las distribuciones Linux en uso real:
-
 | Familia | Detección (`ID` / `ID_LIKE`) | Backend nativo | Estado |
 |---|---|---|---|
-| Debian, Ubuntu, Mint, Pop!_OS, Kali, Devuan | `debian` / `ubuntu` | `apt` / `apt-get` | ✅ v1.0 |
-| Arch, Manjaro, EndeavourOS, **CachyOS**, Artix | `arch` | `pacman` (+ `yay`/`paru` opcional) | ✅ v1.0 |
-| Fedora, RHEL, Rocky, AlmaLinux, CentOS | `fedora` / `rhel` | `dnf` (fallback `yum`) | ✅ v1.0 |
-| openSUSE, SLES | `suse` | `zypper` | ✅ v1.0 |
-| Alpine | `alpine` | `apk` | ✅ v1.0 |
-| Void | `void` | `xbps` | ✅ v1.0 |
-| Gentoo | `gentoo` | `emerge` | 🧪 en estudio |
-| NixOS | `nixos` | `nix` | ⚠️ ver Limitaciones |
-
-## 🚀 Instalación
-
-```bash
-git clone https://github.com/axlfc/glue.git ~/.glue
-echo 'source ~/.glue/glue.sh' >> ~/.bashrc
-source ~/.bashrc
-```
-
-O ejecutando el instalador incluido:
-
-```bash
-./install.sh
-```
+| Debian, Ubuntu, Mint, Pop!_OS, Kali, Devuan | `debian` / `ubuntu` | `apt` / `apt-get` | ✅ v2.0 |
+| Arch, Manjaro, EndeavourOS, **CachyOS**, Artix | `arch` | `pacman` (+ `yay`/`paru` opcional) | ✅ v2.0 |
+| Fedora, RHEL, Rocky, AlmaLinux, CentOS | `fedora` / `rhel` | `dnf` (fallback `yum`) | ✅ v2.0 |
+| openSUSE, SLES | `suse` | `zypper` | ✅ v2.0 |
+| Alpine | `alpine` | `apk` | ✅ v2.0 |
+| Void | `void` | `xbps` | ✅ v2.0 |
 
 ## 🛠️ Uso
 
 ```bash
-# Se configura una vez: el dialecto es la sintaxis que ya llevas en la memoria muscular
+# Se configura el dialecto habitual:
 glue config set dialect apt
 
-# A partir de aquí da igual el sistema en el que estés:
-apt install neovim          # en Arch/CachyOS   → sudo pacman -S neovim
-apt remove neovim           # en Fedora         → sudo dnf remove neovim
-apt update && apt upgrade   # en openSUSE       → sudo zypper refresh && sudo zypper update
-apt search ripgrep          # en cualquiera     → (sin sudo, no es una operación privileged)
+# Ejecución normal:
+apt install python3-pip     # En Arch → sudo pacman -S python-pip (mapeo automático de nombre)
+apt install build-essential # En Fedora → sudo dnf install gcc-c++ (mapeo automático)
+
+# Banderas globales instantáneas:
+glue --dry-run apt install neovim
+glue --verbose --backend=apk install ripgrep
+
+# Ver la equivalencia de un paquete entre todas las distros:
+glue map fd
 ```
-
-También existe el propio comando `glue` como verbo neutro:
-
-```bash
-glue install neovim
-glue search ripgrep
-```
-
-> ⚠️ **Nota importante sobre `sudo`.** Escribe `apt install paquete`, no `sudo apt install paquete`. Las funciones de shell que define `glue` no son visibles para `sudo` (los alias/funciones de tu shell interactiva no se heredan en el subproceso que lanza `sudo`), así que es la propia función la que invoca `sudo` internamente cuando la operación lo requiere.
 
 ## 🔤 Tabla de equivalencias de comandos
 
 | Acción | `apt` (dialecto) | `pacman` | `dnf` | `zypper` | `apk` | `xbps` |
 |---|---|---|---|---|---|---|
-| Instalar paquete | `install` | `-S` | `install` | `install` | `add` | `-S` |
-| Eliminar paquete | `remove` | `-R` | `remove` | `remove` | `del` | `remove` |
-| Eliminar + huérfanos | `autoremove` | `-Rns` | `autoremove` | `remove --clean-deps` | `del` | `-o` |
-| Refrescar índices | `update` | `-Sy` * | `makecache` | `refresh` | `update` | `-S` |
-| Actualizar sistema | `upgrade` | `-Syu` | `upgrade` | `update` | `upgrade` | `-su` |
-| Buscar paquete | `search` | `-Ss` | `search` | `search` | `search` | `-Rs` |
-| Info de un paquete | `show` | `-Si` | `info` | `info` | `info` | `-S` |
-| Listar instalados | `list --installed` | `-Q` | `list installed` | `packages --installed-only` | `list --installed` | `-l` |
-| Limpiar caché | `clean` | `-Sc` | `clean all` | `clean` | `cache clean` | `-O` |
+| Instalar | `install` | `-S` | `install` | `install` | `add` | `-S` |
+| Eliminar | `remove` | `-R` | `remove` | `remove` | `del` | `remove` |
+| Huérfanos | `autoremove` | `-Rns` | `autoremove` | `remove --clean-deps` | `del` | `-o` |
+| Índices | `update` | `-Sy` | `makecache` | `refresh` | `update` | `-S` |
+| Actualizar | `upgrade` | `-Syu` | `upgrade` | `update` | `upgrade` | `-su` |
+| Buscar | `search` | `-Ss` | `search` | `search` | `search` | `-Rs` |
+| Info | `show` | `-Si` | `info` | `info` | `info` | `-S` |
+| Lista | `list --installed` | `-Q` | `list installed` | `packages --installed-only` | `list --installed` | `-l` |
+| Limpiar | `clean` | `-Sc` | `clean all` | `clean` | `cache clean` | `-O` |
 
-`*` `glue` nunca ejecuta el refresco de pacman (`-Sy`) de forma aislada: siempre lo encadena con la actualización (`-Syu`).
+## 🗺️ Roadmap de versiones
 
-## ⚙️ Configuración
+- [x] **v1.0** — Detección de SO + dialectos/backends para `apt`, `pacman`, `dnf`, `zypper`, `apk`, `xbps`
+- [x] **v1.1** — Integración extendida con helpers de AUR (`yay`, `paru`, `auto`)
+- [x] **v1.2** — Banderas CLI globales (`--dry-run`, `--verbose`, `--backend=<name>`)
+- [x] **v2.0** — Mapeo inteligente de nombres de paquetes entre distribuciones (Local database + Repology API con caché local)
+- [ ] **v3.0** — Especificación de Arquitectura de Próxima Generación (Diseño detallado a continuación)
 
-```ini
-# ~/.config/glue/config o ~/.glue/config
-GLUE_DIALECT=apt          # apt | pacman | dnf | zypper | apk | xbps
-GLUE_BACKEND=auto         # auto | pacman | apt | dnf | zypper | apk | xbps (fuerza un backend)
-GLUE_USE_AUR_HELPER=yay   # yay | paru | none (solo aplica si el backend es pacman)
-GLUE_DRY_RUN=false        # true = muestra el comando real sin ejecutarlo
-GLUE_VERBOSE=true         # true = imprime la traducción antes de ejecutar
-```
+---
 
-## 📁 Estructura del proyecto
+## 🔮 Diseño Arquitectónico de `glue v3.0`
 
-```
-glue/
-├── glue.sh              # Punto de entrada, se sourcea desde .bashrc/.zshrc
-├── lib/
-│   ├── config.sh        # Gestión de configuración
-│   ├── detect.sh        # Parseo de /etc/os-release y resolución de backend
-│   ├── core.sh          # Motor de ejecución, dry-run, verbose y sudo
-│   ├── dialects/        # Un archivo por sintaxis "de entrada"
-│   │   ├── apt.sh
-│   │   ├── pacman.sh
-│   │   ├── dnf.sh
-│   │   ├── zypper.sh
-│   │   ├── apk.sh
-│   │   └── xbps.sh
-│   └── backends/        # Un archivo por gestor "de salida" real
-│       ├── apt.sh
-│       ├── pacman.sh
-│       ├── dnf.sh
-│       ├── zypper.sh
-│       ├── apk.sh
-│       └── xbps.sh
-├── config/
-│   └── glue.conf.example
-├── install.sh           # Instalador automático
-├── tests/               # Suite de tests (`tests/test_runner.sh`)
-└── README.md
-```
+`glue v3.0` expandirá las capacidades de la herramienta convirtiéndola en un gestor universal de entrono heterogéneo.
 
-## 🗺️ Roadmap
+### 📐 Principales Pilares de v3.0
 
-- [x] v1.0 — Detección de SO + dialectos/backends para `apt`, `pacman`, `dnf`, `zypper`, `apk`, `xbps`
-- [ ] v1.1 — Helpers de AUR (`yay`, `paru`) en pacman con flags extendidos
-- [ ] v1.2 — Modos globales `--dry-run` y `--verbose` vía CLI flags
-- [ ] v2.0 — Resolución de nombres de paquete entre distros (posible integración con Repology)
+1. **Gestores de Paquetes Universales (`flatpak`, `snap`, `appimage`, `nix`)**
+   - Introducción de modificadores de alcance o proveedores explícitos:
+     ```bash
+     glue install --provider=flatpak org.gimp.GIMP
+     glue install --provider=snap code
+     ```
+   - Si un paquete no existe en los repositorios nativos del sistema, `glue` ofrecerá un fallback automático hacia Flatpak / Snap si están disponibles.
+
+2. **Ejecución Remota y en Contenedores (`--target`)**
+   - Ejecución de comandos de paquetes sobre contenedores Docker/Podman o máquinas remotas mediante SSH sin necesidad de instalar `glue` en el destino:
+     ```bash
+     glue --target=docker:my_ubuntu_container install neovim
+     glue --target=ssh://user@remote-host install htop
+     ```
+
+3. **Arquitectura Modular de Plugins (`lib/plugins/`)**
+   - Sistema de hooks pre/post instalación para ejecutar acciones automatizadas (p. ej., reiniciar servicios, limpiar dependencias, notificaciones).
+   - Extensibilidad mediante scripts `.sh` colocados en `~/.config/glue/plugins/`.
+
+4. **Detección e Integración de Lenguajes y Módulos (`pip`, `cargo`, `npm`, `gem`)**
+   - Soporte opcional para paquetes de lenguajes de programación mediante dialectos unificados:
+     ```bash
+     glue --provider=cargo install ripgrep
+     glue --provider=pip install requests
+     ```
+
+---
 
 ## 📄 Licencia
 

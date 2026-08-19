@@ -121,6 +121,7 @@ export GLUE_USE_AUR_HELPER=none
 
 source "$ROOT_DIR/lib/config.sh"
 source "$ROOT_DIR/lib/detect.sh"
+source "$ROOT_DIR/lib/pkgmap.sh"
 source "$ROOT_DIR/lib/backends/apt.sh"
 source "$ROOT_DIR/lib/backends/pacman.sh"
 source "$ROOT_DIR/lib/backends/dnf.sh"
@@ -173,9 +174,47 @@ assert_equals "sudo xbps-install -S neovim" "$out_xbps_install" "XBPS install tr
 rm -f "$GLUE_CONFIG_FILE"
 
 
-# Test 4: Dialects
-echo "Test Group 4: Dialect Translation"
-export GLUE_CONFIG_FILE="/tmp/test_glue_config_4"
+# Test 4: Global CLI Flags & Overrides (v1.2)
+echo "Test Group 4: Global CLI Flags & Overrides"
+export GLUE_DRY_RUN=false
+export GLUE_VERBOSE=false
+export GLUE_BACKEND=apt
+
+out_flag_dry=$(glue_dispatch --dry-run install neovim)
+assert_equals "sudo apt install neovim" "$out_flag_dry" "Global --dry-run flag override"
+
+out_flag_backend=$(glue_dispatch --dry-run --backend=apk install neovim)
+assert_equals "sudo apk add neovim" "$out_flag_backend" "Global --backend=apk flag override"
+
+
+# Test 5: Package Name Mapping & Repology Cache (v2.0)
+echo "Test Group 5: Package Name Mapping & Repology Cache"
+map_apt_pip=$(glue_resolve_local_map apt pip)
+assert_equals "python3-pip" "$map_apt_pip" "Local map 'pip' -> APT python3-pip"
+
+map_pacman_pip=$(glue_resolve_local_map pacman pip)
+assert_equals "python-pip" "$map_pacman_pip" "Local map 'pip' -> Pacman python-pip"
+
+map_dnf_build=$(glue_resolve_local_map dnf build-essential)
+assert_equals "gcc-c++" "$map_dnf_build" "Local map 'build-essential' -> DNF gcc-c++"
+
+map_apt_fd=$(glue_resolve_local_map apt fd)
+assert_equals "fd-find" "$map_apt_fd" "Local map 'fd' -> APT fd-find"
+
+# Test Repology offline cache fallback parser
+mkdir -p /tmp/glue_cache_test
+export GLUE_CACHE_DIR="/tmp/glue_cache_test"
+echo '[{"repo":"arch","srcname":"fd"},{"repo":"debian_11","srcname":"fd-find"}]' > /tmp/glue_cache_test/fd.json
+
+repo_match=$(glue_repology_lookup apt fd)
+assert_equals "fd-find" "$repo_match" "Repology JSON parser correctly extracts Debian srcname"
+
+rm -rf /tmp/glue_cache_test
+
+
+# Test 6: Neutral CLI & Dialects
+echo "Test Group 6: Neutral CLI & Dialects"
+export GLUE_CONFIG_FILE="/tmp/test_glue_config_6"
 rm -f "$GLUE_CONFIG_FILE"
 
 export GLUE_DRY_RUN=true
@@ -186,7 +225,6 @@ export GLUE_USE_AUR_HELPER=none
 
 source "$ROOT_DIR/glue.sh"
 
-# When active backend is pacman and dialect is apt, 'apt' command is aliased/defined to translate to pacman
 out_apt_cmd=$(apt install neovim)
 assert_equals "sudo pacman -S neovim" "$out_apt_cmd" "APT dialect 'apt install neovim' on pacman backend"
 
