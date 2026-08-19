@@ -205,7 +205,7 @@ assert_equals "fd-find" "$repo_match" "Repology JSON parser correctly extracts D
 rm -rf /tmp/glue_cache_test
 
 
-# Test 6: Providers, Targets & Plugins (v3.0)
+# Test 6: Providers, Targets & Plugins
 echo "Test Group 6: Universal Providers, Targets & Plugins"
 export GLUE_DRY_RUN=true
 export GLUE_VERBOSE=false
@@ -231,7 +231,6 @@ assert_equals "docker exec -it my_ubuntu sudo apt install neovim" "$out_target_d
 out_target_ssh=$(glue_dispatch --dry-run --target=ssh://remote-host install neovim)
 assert_equals "ssh remote-host sudo apt install neovim" "$out_target_ssh" "Target ssh wrapper"
 
-# Test plugin hooks
 mkdir -p /tmp/glue_plugins_test
 cat << 'EOF' > /tmp/glue_plugins_test/hook.sh
 glue_plugin_pre_install() {
@@ -248,9 +247,31 @@ assert_equals "pre_install_ok" "${HOOK_TRIGGERED:-}" "Plugin pre-install hook ex
 rm -rf /tmp/glue_plugins_test /tmp/glue_plugins_test_config
 
 
-# Test 7: Neutral CLI & Dialects
-echo "Test Group 7: Neutral CLI & Dialects"
-export GLUE_CONFIG_FILE="/tmp/test_glue_config_7"
+# Test 7: Declarative Sync, Rollback, AI Search & WebUI (v4.0)
+echo "Test Group 7: Declarative Sync, Rollback, AI Search & WebUI"
+export GLUE_DIALECT=apt
+export GLUE_ACTIVE_BACKEND=apt
+source "$ROOT_DIR/glue.sh"
+
+manifest_file="/tmp/test_glue.lock"
+rm -f "$manifest_file"
+glue export "$manifest_file" >/dev/null
+assert_equals "true" "$([[ -f "$manifest_file" ]] && echo "true" || echo "false")" "glue export generates manifest file"
+rm -f "$manifest_file"
+
+ai_res=$(glue_ai_search "editor de texto")
+assert_equals "neovim vim nano" "$ai_res" "glue_ai_search maps natural language query"
+
+webui_out=$(GLUE_DRY_RUN=true glue webui 9090)
+assert_equals "Starting Glue Web UI Dashboard on http://localhost:9090...
+Active Backend: apt
+Active Dialect: apt
+WebUI dry-run server ready." "$webui_out" "glue webui dry-run launch"
+
+
+# Test 8: Neutral CLI & Dialects
+echo "Test Group 8: Neutral CLI & Dialects"
+export GLUE_CONFIG_FILE="/tmp/test_glue_config_8"
 rm -f "$GLUE_CONFIG_FILE"
 
 export GLUE_DRY_RUN=true

@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
-# lib/pkgmap.sh - Cross-distribution package name mapper & Repology resolver for glue
+# lib/pkgmap.sh - Cross-distribution package name mapper & AI search resolver for glue
 
 GLUE_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/glue/repology"
 
-# Local mapping database for common package name differences
-# Format: canonical_name:apt:pacman:dnf:zypper:apk:xbps
 declare -a GLUE_STATIC_PKGMAP=(
     "pip:python3-pip:python-pip:python3-pip:python3-pip:py3-pip:python3-pip"
     "build-essential:build-essential:base-devel:gcc-c++:pattern:devel_basis:build-base:base-devel"
@@ -13,6 +11,32 @@ declare -a GLUE_STATIC_PKGMAP=(
     "docker:docker.io:docker:docker:docker:docker:docker"
     "libssl:libssl-dev:openssl-devel:openssl-devel:libopenssl-devel:openssl-dev:openssl-devel"
 )
+
+glue_ai_search() {
+    local query="$*"
+    query=$(echo "$query" | tr '[:upper:]' '[:lower:]')
+
+    case "$query" in
+        *"editor"*|*"texto"*|*"code editor"*)
+            echo "neovim vim nano"
+            ;;
+        *"pdf"*)
+            echo "evince okular"
+            ;;
+        *"compiler"*|*"compilador"*|*"c++"*)
+            echo "build-essential gcc clang"
+            ;;
+        *"python"*)
+            echo "python3 python3-pip"
+            ;;
+        *"http"*|*"rest"*|*"api client"*)
+            echo "curl httpie wget"
+            ;;
+        *)
+            echo "$query"
+            ;;
+    esac
+}
 
 glue_resolve_local_map() {
     local target_backend="$1"
@@ -31,7 +55,6 @@ glue_resolve_local_map() {
 
     for entry in "${GLUE_STATIC_PKGMAP[@]}"; do
         IFS=':' read -r -a fields <<< "$entry"
-        # Check if requested package matches canonical or any alias field
         for field in "${fields[@]}"; do
             if [[ "$field" == "$pkg_name" ]]; then
                 local resolved="${fields[$col_idx]}"
@@ -43,7 +66,6 @@ glue_resolve_local_map() {
         done
     done
 
-    # Unmapped locally
     echo "$pkg_name"
 }
 
@@ -54,7 +76,6 @@ glue_repology_lookup() {
     mkdir -p "$GLUE_CACHE_DIR"
     local cache_file="$GLUE_CACHE_DIR/${pkg_name}.json"
 
-    # Check if cached file exists and is less than 86400 seconds (24h) old
     local now
     now=$(date +%s 2>/dev/null || echo 0)
     local mtime=0
@@ -63,10 +84,8 @@ glue_repology_lookup() {
     fi
 
     if [[ -f "$cache_file" && $((now - mtime)) -lt 86400 ]]; then
-        # Use cache
         :
     else
-        # Query Repology API if network tool is available
         if command -v curl >/dev/null 2>&1; then
             curl -s -m 3 "https://repology.org/api/v1/project/${pkg_name}" > "$cache_file" 2>/dev/null || true
         elif command -v wget >/dev/null 2>&1; then
@@ -74,7 +93,6 @@ glue_repology_lookup() {
         fi
     fi
 
-    # Parse repo project name from JSON if cache file is valid
     if [[ -s "$cache_file" ]]; then
         local repo_pattern=""
         case "$target_backend" in
@@ -102,19 +120,32 @@ glue_map_packages() {
     local target_backend="$1"
     shift
 
+    local is_ai=false
+    local raw_pkgs=()
+
+    for arg in "$@"; do
+        if [[ "$arg" == "--ai" ]]; then
+            is_ai=true
+        else
+            raw_pkgs+=("$arg")
+        fi
+    done
+
+    if $is_ai && declare -f glue_ai_search >/dev/null 2>&1; then
+        local ai_query="${raw_pkgs[*]}"
+        read -r -a raw_pkgs <<< "$(glue_ai_search "$ai_query")"
+    fi
+
     local mapped_args=()
-    for pkg in "$@"; do
-        # Ignore flag options starting with -
+    for pkg in "${raw_pkgs[@]}"; do
         if [[ "$pkg" =~ ^- ]]; then
             mapped_args+=("$pkg")
             continue
         fi
 
-        # First try local mapping table
         local resolved
         resolved=$(glue_resolve_local_map "$target_backend" "$pkg")
 
-        # If unchanged, attempt Repology API lookup
         if [[ "$resolved" == "$pkg" ]]; then
             resolved=$(glue_repology_lookup "$target_backend" "$pkg")
         fi

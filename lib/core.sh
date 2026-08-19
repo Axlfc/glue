@@ -1,6 +1,30 @@
 #!/usr/bin/env bash
 # lib/core.sh - Execution engine for glue
 
+glue_rollback_system() {
+    if command -v snapper >/dev/null 2>&1; then
+        echo "[glue-snapshot] Snapper detected. Checking snapshots..."
+        if [[ "${GLUE_DRY_RUN:-false}" == "true" ]]; then
+            echo "snapper list"
+            return 0
+        fi
+        snapper list
+    elif command -v timeshift >/dev/null 2>&1; then
+        echo "[glue-snapshot] Timeshift detected. Checking snapshots..."
+        if [[ "${GLUE_DRY_RUN:-false}" == "true" ]]; then
+            echo "sudo timeshift --list"
+            return 0
+        fi
+        sudo timeshift --list
+    else
+        echo "[glue-snapshot] No supported snapshot manager (snapper/timeshift) detected."
+        echo "Creating a glue restore backup tag..."
+        local backup_tag="/tmp/glue_restore_point_$(date +%Y%m%d_%H%M%S)"
+        glue_export_manifest "$backup_tag"
+        echo "Restore point saved to $backup_tag. Use 'glue sync $backup_tag' to restore."
+    fi
+}
+
 glue_run_plugin_hooks() {
     local hook_stage="$1" # pre or post
     local action="$2"

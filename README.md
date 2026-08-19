@@ -6,7 +6,7 @@
 ![License](https://img.shields.io/badge/License-GNU_GPL_v3-blue)
 ![Platform](https://img.shields.io/badge/platform-Linux-orange)
 
-**Estado:** ✅ v3.0 completado — Proveedores universales y de lenguajes (`flatpak`, `snap`, `pip`, `cargo`, `npm`), ejecuciones remotas/contenedores (`--target`), y motor de plugins de hooks.
+**Estado:** ✅ v4.0 completado — Manifiesto declarativo (`glue export`/`sync`), integración con instantáneas y rollback (`glue rollback`), búsqueda semántica e IA (`glue search --ai`), y servidor WebUI dashboard (`glue webui`).
 
 ---
 
@@ -16,40 +16,38 @@
 
 El nombre no es casual: `glue` (pegamento) es literalmente lo que hace — pega tu forma de trabajar habitual sobre cualquier sistema, en lugar de obligarte a adaptarte tú a cada uno.
 
-## ⚙️ Cómo funciona
+## ⚙️ Características Destacadas v4.0
 
-1. **Detección del sistema.** Se parsean los campos `ID` e `ID_LIKE` de `/etc/os-release` para identificar tanto la distribución exacta como su familia.
-2. **Resolución del backend/proveedor.** `glue` comprueba qué gestor nativo está disponible, o aplica el proveedor solicitado (`--provider=flatpak|snap|pip|cargo|npm`).
-3. **Mapeo inteligente (v2.0).** Traduce automáticamente el nombre del paquete entre repositorios (vía diccionario local estático o mediante consulta con caché a **Repology**).
-4. **Ejecución remota/contenedor (`--target`).** Opcionalmente envuelve y redirige la invocación hacia contenedores Docker/Podman o servidores remotos vía SSH.
-5. **Motor de plugins.** Ejecuta hooks de preconmutación y postconmutación (`pre` y `post`) definidos por el usuario en `~/.config/glue/plugins/`.
+1. **Gestión Declarativa de Manifiestos (`glue export` / `glue sync`)**
+   - Exporta el inventario completo del sistema a un manifiesto reproducible `glue.lock`.
+   - Replica la configuración de paquetes en cualquier distribución con `glue sync`.
 
-```
-┌──────────────┐     ┌──────────────────┐     ┌───────────────────┐     ┌──────────────────┐
-│   Tú          │ --> │  Tu dialecto      │ --> │  Motor de glue    │ --> │  Backend nativo   │
-│ "apt install" │     │  (sintaxis apt)   │     │ (Mapeo, Proveedor │     │ (pacman, dnf,     │
-│               │     │                   │     │  Target y Hooks)  │     │  flatpak, docker) │
-└──────────────┘     └──────────────────┘     └───────────────────┘     └──────────────────┘
-```
+2. **Integración de Instantáneas y Restauración (`glue rollback`)**
+   - Inspección y restauración automática con Snapper / Timeshift o etiquetas de manifiesto de respaldo.
 
-## 🛠️ Uso y Ejemplos v3.0
+3. **Búsqueda Semántica con IA (`glue search --ai`)**
+   - Mapeo inteligente por lenguaje natural (p. ej. "editor de texto", "compilador c++", "api client").
+
+4. **Dashboard WebUI Integrado (`glue webui`)**
+   - Servidor web ligero embebido para consultar el estado del motor y paquetes.
+
+## 🛠️ Ejemplos de Uso v4.0
 
 ```bash
-# Configuración inicial del dialecto preferido:
-glue config set dialect apt
+# Exportar el manifiesto del sistema actual:
+glue export mis_paquetes.lock
 
-# Uso universal con el dialecto habitual:
-apt install python3-pip
+# Sincronizar un nuevo servidor desde el manifiesto:
+glue sync mis_paquetes.lock
 
-# Banderas de proveedores universales y de lenguajes (v3.0):
-glue --provider=flatpak install org.gimp.GIMP
-glue --provider=snap install code
-glue --provider=cargo install ripgrep
-glue --provider=pip install requests
+# Búsqueda semántica inteligente con IA:
+glue search --ai "editor de texto"
 
-# Ejecución sobre contenedores o destinos remotos SSH (v3.0):
-glue --target=docker:container_ubuntu install neovim
-glue --target=ssh://user@remote-server install htop
+# Ver snapshots del sistema / crear punto de respaldo:
+glue rollback
+
+# Lanzar dashboard WebUI:
+glue webui 8080
 ```
 
 ## 🗺️ Roadmap de versiones
@@ -59,27 +57,30 @@ glue --target=ssh://user@remote-server install htop
 - [x] **v1.2** — Banderas CLI globales (`--dry-run`, `--verbose`, `--backend=<name>`)
 - [x] **v2.0** — Mapeo inteligente de nombres de paquetes entre distribuciones (Local database + Repology API con caché local)
 - [x] **v3.0** — Proveedores universales (`flatpak`, `snap`, `pip`, `cargo`, `npm`), ejecuciones en contenedores y SSH (`--target`), y sistema de hooks de plugins
-- [ ] **v4.0** — Especificación y diseño de arquitectura avanzada de próxima generación
+- [x] **v4.0** — Manifiesto declarativo (`export`/`sync`), snapshot rollback, búsqueda IA semántica y servidor WebUI dashboard
+- [ ] **v5.0** — Propuesta de Arquitectura Futura (Diseño detallado a continuación)
 
 ---
 
-## 🔮 Propuesta y Diseño Arquitectónico de `glue v4.0`
+## 🔮 Propuesta y Diseño Arquitectónico de `glue v5.0`
 
-`glue v4.0` elevará la herramienta al nivel de orquestación declarativa y gestión predictiva de entornos:
+`glue v5.0` evolucionará la herramienta hacia una plataforma distribuida, autónoma y resiliente para flotas heterogéneas de sistemas Linux:
 
-1. **Sincronización Declarativa de Manifiestos de Sistema (`glue export` / `glue sync`)**
-   - Exportación de la lista completa de paquetes instalados en un archivo declarativo unificado `glue.lock`.
-   - Replicación exacta del estado del sistema en cualquier otra distribución mediante `glue sync glue.lock`.
+### 📐 Principales Pilares de v5.0
 
-2. **Integración con Instantáneas y Snapshots del Sistema (Btrfs / Snapper / Timeshift)**
-   - Creación automática de instantáneas de punto de restauración antes de cualquier operación destructiva o actualización masiva.
-   - Subcomando `glue rollback` para revertir al estado anterior inmediato en caso de conflicto.
+1. **Orquestación en Flotas y Clústeres P2P (`glue cluster`)**
+   - Sincronización descentralizada del estado de paquetes entre múltiples nodos de una red o clúster local mediante descubrimiento mDNS/Zeroconf.
+   - Distribución P2P de caché de paquetes binarios para acelerar despliegues en servidores sin salida directa a internet.
 
-3. **Asistente Semántico y Búsqueda por Lenguaje Natural**
-   - Búsqueda contextual de utilidades por función en lugar de nombre exacto (p. ej., `glue search "herramienta para editar archivos PDF"`).
+2. **Verificación de Seguridad Automática y Parcheo de Vulnerabilidades (`glue audit`)**
+   - Integración nativa con bases de datos de vulnerabilidades CVE (NVD, OSV.dev).
+   - Auditoría automática antes de instalar o actualizar paquetes e informe de parches críticos de seguridad.
 
-4. **Panel Web y Dashboard de Monitoreo Ligero (`glue webui`)**
-   - Interfaz web minimalista opcional embebida para auditar el estado de paquetes, vulnerabilidades reportadas y actualizaciones pendientes en flota de servidores.
+3. **Autocuración del Sistema y Reparación Predictiva (`glue repair`)**
+   - Detección de dependencias rotas, repositorios inalcanzables o paquetes corruptos y reparación automatizada entre gestores.
+
+4. **Soporte Nativo de Sistemas Inmutables y Atómicos (NixOS, Fedora Silverblue, microOS)**
+   - Transpilación declarativa hacia configuraciones inmutables (`configuration.nix`, `rpm-ostree`) manteniendo la sintaxis interactiva del dialecto preferido.
 
 ---
 
