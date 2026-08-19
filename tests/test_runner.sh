@@ -130,7 +130,6 @@ source "$ROOT_DIR/lib/backends/apk.sh"
 source "$ROOT_DIR/lib/backends/xbps.sh"
 source "$ROOT_DIR/lib/core.sh"
 
-# Test pacman backend commands
 out_install=$(glue_dispatch "install" "neovim")
 assert_equals "sudo pacman -S neovim" "$out_install" "Pacman install translation"
 
@@ -143,7 +142,6 @@ assert_equals "sudo pacman -Syu" "$out_update" "Pacman safe update translation (
 out_search=$(glue_dispatch "search" "ripgrep")
 assert_equals "pacman -Ss ripgrep" "$out_search" "Pacman search translation (no sudo)"
 
-# Test apt backend commands
 GLUE_BACKEND=apt
 out_apt_install=$(glue_dispatch "install" "neovim")
 assert_equals "sudo apt install neovim" "$out_apt_install" "APT install translation"
@@ -151,22 +149,18 @@ assert_equals "sudo apt install neovim" "$out_apt_install" "APT install translat
 out_apt_update=$(glue_dispatch "update")
 assert_equals "sudo apt update" "$out_apt_update" "APT update translation"
 
-# Test dnf backend commands
 GLUE_BACKEND=dnf
 out_dnf_install=$(glue_dispatch "install" "neovim")
 assert_equals "sudo dnf install neovim" "$out_dnf_install" "DNF install translation"
 
-# Test zypper backend commands
 GLUE_BACKEND=zypper
 out_zypper_install=$(glue_dispatch "install" "neovim")
 assert_equals "sudo zypper install neovim" "$out_zypper_install" "Zypper install translation"
 
-# Test apk backend commands
 GLUE_BACKEND=apk
 out_apk_install=$(glue_dispatch "install" "neovim")
 assert_equals "sudo apk add neovim" "$out_apk_install" "APK install translation"
 
-# Test xbps backend commands
 GLUE_BACKEND=xbps
 out_xbps_install=$(glue_dispatch "install" "neovim")
 assert_equals "sudo xbps-install -S neovim" "$out_xbps_install" "XBPS install translation"
@@ -174,7 +168,7 @@ assert_equals "sudo xbps-install -S neovim" "$out_xbps_install" "XBPS install tr
 rm -f "$GLUE_CONFIG_FILE"
 
 
-# Test 4: Global CLI Flags & Overrides (v1.2)
+# Test 4: Global CLI Flags & Overrides
 echo "Test Group 4: Global CLI Flags & Overrides"
 export GLUE_DRY_RUN=false
 export GLUE_VERBOSE=false
@@ -187,7 +181,7 @@ out_flag_backend=$(glue_dispatch --dry-run --backend=apk install neovim)
 assert_equals "sudo apk add neovim" "$out_flag_backend" "Global --backend=apk flag override"
 
 
-# Test 5: Package Name Mapping & Repology Cache (v2.0)
+# Test 5: Package Name Mapping & Repology Cache
 echo "Test Group 5: Package Name Mapping & Repology Cache"
 map_apt_pip=$(glue_resolve_local_map apt pip)
 assert_equals "python3-pip" "$map_apt_pip" "Local map 'pip' -> APT python3-pip"
@@ -201,7 +195,6 @@ assert_equals "gcc-c++" "$map_dnf_build" "Local map 'build-essential' -> DNF gcc
 map_apt_fd=$(glue_resolve_local_map apt fd)
 assert_equals "fd-find" "$map_apt_fd" "Local map 'fd' -> APT fd-find"
 
-# Test Repology offline cache fallback parser
 mkdir -p /tmp/glue_cache_test
 export GLUE_CACHE_DIR="/tmp/glue_cache_test"
 echo '[{"repo":"arch","srcname":"fd"},{"repo":"debian_11","srcname":"fd-find"}]' > /tmp/glue_cache_test/fd.json
@@ -212,9 +205,52 @@ assert_equals "fd-find" "$repo_match" "Repology JSON parser correctly extracts D
 rm -rf /tmp/glue_cache_test
 
 
-# Test 6: Neutral CLI & Dialects
-echo "Test Group 6: Neutral CLI & Dialects"
-export GLUE_CONFIG_FILE="/tmp/test_glue_config_6"
+# Test 6: Providers, Targets & Plugins (v3.0)
+echo "Test Group 6: Universal Providers, Targets & Plugins"
+export GLUE_DRY_RUN=true
+export GLUE_VERBOSE=false
+
+out_flatpak=$(glue_dispatch --provider=flatpak install org.gimp.GIMP)
+assert_equals "flatpak install org.gimp.GIMP" "$out_flatpak" "Provider flatpak install translation"
+
+out_snap=$(glue_dispatch --provider=snap install code)
+assert_equals "sudo snap install code" "$out_snap" "Provider snap install translation"
+
+out_cargo=$(glue_dispatch --provider=cargo install ripgrep)
+assert_equals "cargo install ripgrep" "$out_cargo" "Provider cargo install translation"
+
+out_pip=$(glue_dispatch --provider=pip install requests)
+assert_equals "pip install requests" "$out_pip" "Provider pip install translation"
+
+out_npm=$(glue_dispatch --provider=npm install typescript)
+assert_equals "npm install -g typescript" "$out_npm" "Provider npm install translation"
+
+out_target_docker=$(glue_dispatch --dry-run --target=docker:my_ubuntu install neovim)
+assert_equals "docker exec -it my_ubuntu sudo apt install neovim" "$out_target_docker" "Target docker exec wrapper"
+
+out_target_ssh=$(glue_dispatch --dry-run --target=ssh://remote-host install neovim)
+assert_equals "ssh remote-host sudo apt install neovim" "$out_target_ssh" "Target ssh wrapper"
+
+# Test plugin hooks
+mkdir -p /tmp/glue_plugins_test
+cat << 'EOF' > /tmp/glue_plugins_test/hook.sh
+glue_plugin_pre_install() {
+    export HOOK_TRIGGERED="pre_install_ok"
+}
+EOF
+export XDG_CONFIG_HOME="/tmp/glue_plugins_test_config"
+mkdir -p "$XDG_CONFIG_HOME/glue/plugins"
+cp /tmp/glue_plugins_test/hook.sh "$XDG_CONFIG_HOME/glue/plugins/"
+
+glue_dispatch --dry-run install neovim >/dev/null
+assert_equals "pre_install_ok" "${HOOK_TRIGGERED:-}" "Plugin pre-install hook execution"
+
+rm -rf /tmp/glue_plugins_test /tmp/glue_plugins_test_config
+
+
+# Test 7: Neutral CLI & Dialects
+echo "Test Group 7: Neutral CLI & Dialects"
+export GLUE_CONFIG_FILE="/tmp/test_glue_config_7"
 rm -f "$GLUE_CONFIG_FILE"
 
 export GLUE_DRY_RUN=true

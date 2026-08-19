@@ -45,7 +45,7 @@ glue() {
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
-            --dry-run|--verbose|-v|--backend=*)
+            --dry-run|--verbose|-v|--backend=*|--provider=*|--target=*)
                 global_flags+=("$1")
                 shift
                 ;;
@@ -112,6 +112,8 @@ glue() {
             echo "  --dry-run          Show command without executing"
             echo "  --verbose, -v      Print translation command"
             echo "  --backend=<name>   Force a specific backend"
+            echo "  --provider=<name>  Use provider (flatpak, snap, pip, cargo, npm)"
+            echo "  --target=<dest>    Execute on remote/container target (docker:..., ssh://...)"
             echo ""
             echo "Actions:"
             echo "  install <pkg...>   Install package(s)"
