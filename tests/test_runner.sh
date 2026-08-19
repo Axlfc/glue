@@ -247,8 +247,8 @@ assert_equals "pre_install_ok" "${HOOK_TRIGGERED:-}" "Plugin pre-install hook ex
 rm -rf /tmp/glue_plugins_test /tmp/glue_plugins_test_config
 
 
-# Test 7: v4.0 / v5.0 / v6.0 Advanced Subcommands
-echo "Test Group 7: Advanced Features (Sync, AI, WebUI, Cluster, Audit, Repair, Trace, Wasm, Daemon)"
+# Test 7: Advanced Subcommands (v4.0 - v7.0)
+echo "Test Group 7: Advanced Subcommands (Sync, AI, WebUI, Cluster, Audit, Repair, Trace, Wasm, Daemon, Build, Verify)"
 export GLUE_DIALECT=apt
 export GLUE_ACTIVE_BACKEND=apt
 source "$ROOT_DIR/glue.sh"
@@ -257,7 +257,6 @@ manifest_file="/tmp/test_glue.lock"
 rm -f "$manifest_file"
 glue export "$manifest_file" >/dev/null
 assert_equals "true" "$([[ -f "$manifest_file" ]] && echo "true" || echo "false")" "glue export generates manifest file"
-rm -f "$manifest_file"
 
 ai_res=$(glue_ai_search "editor de texto")
 assert_equals "neovim vim nano" "$ai_res" "glue_ai_search maps natural language query"
@@ -294,6 +293,16 @@ wasm-runtime exec --plugin list" "$wasm_out" "glue plugin dry-run execution"
 daemon_out=$(GLUE_DRY_RUN=true glue daemon status)
 assert_equals "[glue-daemon] Autonomous maintenance daemon service (status)...
 glue-daemon --service status" "$daemon_out" "glue daemon dry-run execution"
+
+build_out=$(GLUE_DRY_RUN=true glue build neovim-git)
+assert_equals "[glue-build] Distributing compilation task for 'neovim-git' across cluster nodes...
+p2p-build-cluster dispatch --pkg=neovim-git" "$build_out" "glue build dry-run execution"
+
+verify_out=$(GLUE_DRY_RUN=true glue verify "$manifest_file")
+assert_equals "[glue-verify] Verifying cryptographic signatures for manifest '$manifest_file'...
+gpg --verify $manifest_file.sig $manifest_file" "$verify_out" "glue verify dry-run execution"
+
+rm -f "$manifest_file"
 
 
 # Test 8: Neutral CLI & Dialects

@@ -214,6 +214,12 @@ glue() {
         daemon)
             glue_autodeamon "$@"
             ;;
+        build)
+            glue_build_distributed "$@"
+            ;;
+        verify)
+            glue_verify_manifest "$@"
+            ;;
         install|remove|autoremove|update|upgrade|search|show|list|clean)
             if [[ "$cmd" == "list" && "${1:-}" == "--installed" ]]; then
                 shift
@@ -240,6 +246,8 @@ glue() {
             echo "  glue trace <command...>"
             echo "  glue plugin [list|load|run]"
             echo "  glue daemon [start|status|stop]"
+            echo "  glue build <source_pkg>"
+            echo "  glue verify [manifest.lock]"
             echo "  glue webui [port]"
             echo ""
             echo "Global Flags:"
