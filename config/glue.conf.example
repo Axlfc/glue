@@ -1,0 +1,6 @@
+# ~/.glue/config or ~/.config/glue/config
+GLUE_DIALECT=apt          # apt | pacman | dnf | zypper | apk
+GLUE_BACKEND=auto         # auto | pacman | apt | dnf | zypper | apk (forces a backend)
+GLUE_USE_AUR_HELPER=yay   # yay | paru | none (only applies if backend is pacman)
+GLUE_DRY_RUN=false        # true = shows the real command without executing it
+GLUE_VERBOSE=true         # true = prints the translation before executing
