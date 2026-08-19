@@ -220,6 +220,12 @@ glue() {
         verify)
             glue_verify_manifest "$@"
             ;;
+        graph)
+            glue_graph_dependencies "$@"
+            ;;
+        sandbox)
+            glue_sandbox_run "$@"
+            ;;
         install|remove|autoremove|update|upgrade|search|show|list|clean)
             if [[ "$cmd" == "list" && "${1:-}" == "--installed" ]]; then
                 shift
@@ -248,6 +254,8 @@ glue() {
             echo "  glue daemon [start|status|stop]"
             echo "  glue build <source_pkg>"
             echo "  glue verify [manifest.lock]"
+            echo "  glue graph <pkg>"
+            echo "  glue sandbox <command...>"
             echo "  glue webui [port]"
             echo ""
             echo "Global Flags:"

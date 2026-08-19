@@ -247,8 +247,8 @@ assert_equals "pre_install_ok" "${HOOK_TRIGGERED:-}" "Plugin pre-install hook ex
 rm -rf /tmp/glue_plugins_test /tmp/glue_plugins_test_config
 
 
-# Test 7: Advanced Subcommands (v4.0 - v7.0)
-echo "Test Group 7: Advanced Subcommands (Sync, AI, WebUI, Cluster, Audit, Repair, Trace, Wasm, Daemon, Build, Verify)"
+# Test 7: Advanced Subcommands (v4.0 - v8.0)
+echo "Test Group 7: Advanced Subcommands (Sync, AI, WebUI, Cluster, Audit, Repair, Trace, Wasm, Daemon, Build, Verify, Graph, Sandbox)"
 export GLUE_DIALECT=apt
 export GLUE_ACTIVE_BACKEND=apt
 source "$ROOT_DIR/glue.sh"
@@ -301,6 +301,14 @@ p2p-build-cluster dispatch --pkg=neovim-git" "$build_out" "glue build dry-run ex
 verify_out=$(GLUE_DRY_RUN=true glue verify "$manifest_file")
 assert_equals "[glue-verify] Verifying cryptographic signatures for manifest '$manifest_file'...
 gpg --verify $manifest_file.sig $manifest_file" "$verify_out" "glue verify dry-run execution"
+
+graph_out=$(GLUE_DRY_RUN=true glue graph neovim)
+assert_equals "[glue-graph] Resolving dependency graph tree for 'neovim' across repos...
+glue-dep-graph --resolve neovim" "$graph_out" "glue graph dry-run execution"
+
+sandbox_out=$(GLUE_DRY_RUN=true glue sandbox apt install neovim)
+assert_equals "[glue-sandbox] Initializing unshare/chroot ephemeral sandbox environment...
+unshare --user --map-root-user -- apt install neovim" "$sandbox_out" "glue sandbox dry-run execution"
 
 rm -f "$manifest_file"
 

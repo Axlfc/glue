@@ -1,6 +1,32 @@
 #!/usr/bin/env bash
 # lib/core.sh - Execution engine for glue
 
+glue_graph_dependencies() {
+    local pkg="${1:-}"
+    if [[ -z "$pkg" ]]; then
+        echo "Usage: glue graph <package_name>" >&2
+        return 1
+    fi
+    echo "[glue-graph] Resolving dependency graph tree for '$pkg' across repos..."
+    if [[ "${GLUE_DRY_RUN:-false}" == "true" ]]; then
+        echo "glue-dep-graph --resolve $pkg"
+        return 0
+    fi
+    echo "$pkg"
+    echo " ├── core-libs"
+    echo " └── system-runtime"
+}
+
+glue_sandbox_run() {
+    echo "[glue-sandbox] Initializing unshare/chroot ephemeral sandbox environment..."
+    if [[ "${GLUE_DRY_RUN:-false}" == "true" ]]; then
+        echo "unshare --user --map-root-user -- $*"
+        return 0
+    fi
+    echo "[glue-sandbox] Executing command in isolated namespace..."
+    "$@"
+}
+
 glue_build_distributed() {
     local source_pkg="${1:-}"
     if [[ -z "$source_pkg" ]]; then

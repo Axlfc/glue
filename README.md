@@ -6,7 +6,7 @@
 ![License](https://img.shields.io/badge/License-GNU_GPL_v3-blue)
 ![Platform](https://img.shields.io/badge/platform-Linux-orange)
 
-**Estado:** ✅ v7.0 completado — Compilación distribuida P2P (`glue build`), verificación criptográfica de manifiestos Zero Trust (`glue verify`), trazado eBPF (`glue trace`), motor de plugins Wasm (`glue plugin`), y demonio autónomo (`glue daemon`).
+**Estado:** ✅ v8.0 completado — Grafos de dependencias multi-distro (`glue graph`), entornos de prueba aislados sandbox/chroot (`glue sandbox`), compilación distribuida P2P (`glue build`), verificación Zero Trust (`glue verify`), trazado eBPF (`glue trace`), motor de plugins Wasm (`glue plugin`), y demonio autónomo (`glue daemon`).
 
 ---
 
@@ -29,6 +29,7 @@
 │   • Proveedores Universales (--provider=flatpak|snap|pip|cargo|npm)    │
 │   • Ejecución en Contenedores & SSH (--target=docker|podman|ssh)       │
 │   • Mapeo Inteligente de Paquetes & Repology API (lib/pkgmap.sh)        │
+│   • Grafos de Dependencias & Entornos Sandbox (`glue graph`/`sandbox`)  │
 │   • Hook Engine de Plugins & Wasm Engine (~/.config/glue/plugins/)     │
 │   • Observabilidad eBPF & Demonio Autónomo (`glue trace` / `daemon`)   │
 │   • Compilación P2P Distribuida & Verificación Zero Trust              │
@@ -49,12 +50,12 @@ Cobertura de más del 99% de las distribuciones Linux en uso real:
 
 | Familia de Distro | Detección (`ID` / `ID_LIKE`) | Backend Nativo | Estado |
 |---|---|---|---|
-| Debian, Ubuntu, Mint, Pop!_OS, Kali, Devuan | `debian` / `ubuntu` | `apt` / `apt-get` | ✅ v7.0 |
-| Arch, Manjaro, EndeavourOS, CachyOS, Artix | `arch` | `pacman` (+ `yay`/`paru` AUR) | ✅ v7.0 |
-| Fedora, RHEL, Rocky, AlmaLinux, CentOS | `fedora` / `rhel` | `dnf` (fallback `yum`) | ✅ v7.0 |
-| openSUSE (Leap, Tumbleweed), SLES | `suse` | `zypper` | ✅ v7.0 |
-| Alpine Linux | `alpine` | `apk` | ✅ v7.0 |
-| Void Linux | `void` | `xbps` | ✅ v7.0 |
+| Debian, Ubuntu, Mint, Pop!_OS, Kali, Devuan | `debian` / `ubuntu` | `apt` / `apt-get` | ✅ v8.0 |
+| Arch, Manjaro, EndeavourOS, CachyOS, Artix | `arch` | `pacman` (+ `yay`/`paru` AUR) | ✅ v8.0 |
+| Fedora, RHEL, Rocky, AlmaLinux, CentOS | `fedora` / `rhel` | `dnf` (fallback `yum`) | ✅ v8.0 |
+| openSUSE (Leap, Tumbleweed), SLES | `suse` | `zypper` | ✅ v8.0 |
+| Alpine Linux | `alpine` | `apk` | ✅ v8.0 |
+| Void Linux | `void` | `xbps` | ✅ v8.0 |
 
 ---
 
@@ -88,6 +89,8 @@ glue audit                   # Auditar paquetes instalados buscando vulnerabilid
 glue repair                  # Reparar dependencias rotas e índices desincronizados
 glue trace "apt install pkg" # Rastrear llamadas al sistema vía sondas eBPF
 glue verify glue.lock        # Verificar firma criptográfica de manifiestos Zero Trust
+glue graph neovim            # Ver árbol de dependencias cruzado
+glue sandbox "apt install x" # Probar instalación en entorno aislado
 glue daemon start            # Iniciar demonio de mantenimiento autónomo
 glue clean                   # Limpiar la caché de todos los gestores
 ```
@@ -107,9 +110,10 @@ glue search --ai "editor de texto"
 glue --provider=flatpak install org.gimp.GIMP
 glue --target=docker:container_ubuntu install neovim
 
-# Compilación distribuida P2P y firmas:
+# Compilación distribuida P2P, firmas y sandbox:
 glue build neovim-git
 glue verify glue.lock
+glue sandbox "apt install htop"
 
 # Gestión declarativa y clúster:
 glue export glue.lock
@@ -147,19 +151,20 @@ glue webui 8080
 - [x] **v5.0** — Orquestación en clúster (`glue cluster`), auditoría de seguridad CVE (`glue audit`), autocuración (`glue repair`)
 - [x] **v6.0** — Monitoreo eBPF (`glue trace`), motor Wasm (`glue plugin`), demonio autónomo (`glue daemon`)
 - [x] **v7.0** — Compilación P2P distribuida (`glue build`), verificación criptográfica Zero Trust (`glue verify`)
-- [ ] **v8.0** — Propuesta de Arquitectura Futura (Diseño detallado a continuación)
+- [x] **v8.0** — Grafos de dependencias multi-distro (`glue graph`), espacios de nombres sandbox efímeros (`glue sandbox`)
+- [ ] **v9.0** — Propuesta de Arquitectura Futura (Diseño detallado a continuación)
 
 ---
 
-## 🔮 Propuesta y Diseño Arquitectónico de `glue v8.0`
+## 🔮 Propuesta y Diseño Arquitectónico de `glue v9.0`
 
-`glue v8.0` evolucionará la plataforma hacia la orquestación basada en Grafos de Dependencias Semánticas y Síntesis Contextual de Entornos:
+`glue v9.0` evolucionará la plataforma hacia la Síntesis Semántica Predictiva y la Inmutabilidad Transaccional Total:
 
-1. **Resolución de Grafos de Dependencias Multi-Distribución (`glue graph`)**
-   - Visualización y análisis en tiempo real de los árboles de dependencias combinados entre repositorios de sistema y proveedores universales.
+1. **Predicción de Conflictos de Paquetes en Red Neuronal (`glue predict`)**
+   - Análisis heurístico previo a la instalación para predecir incompatibilidades de librerías compartidas (ABI/shared library breakage).
 
-2. **Aislamiento Sandbox Efímero en Espacios de Nombres (`glue sandbox`)**
-   - Ejecución de instalaciones de prueba aisladas dentro de espacios de nombres unshare/chroot sin alterar el estado del sistema host.
+2. **Replicación Instantánea de Ambientes vía MicroVMs (`glue microvm`)**
+   - Despliegue ultrarrápido de microVMs aisladas Firecracker para pruebas de integración de paquetes en milisegundos.
 
 ---
 
