@@ -247,8 +247,8 @@ assert_equals "pre_install_ok" "${HOOK_TRIGGERED:-}" "Plugin pre-install hook ex
 rm -rf /tmp/glue_plugins_test /tmp/glue_plugins_test_config
 
 
-# Test 7: Declarative Sync, Rollback, AI Search, Cluster, Audit & Repair (v4.0/v5.0)
-echo "Test Group 7: Declarative Sync, Rollback, AI Search, Cluster, Audit & Repair"
+# Test 7: v4.0 / v5.0 / v6.0 Advanced Subcommands
+echo "Test Group 7: Advanced Features (Sync, AI, WebUI, Cluster, Audit, Repair, Trace, Wasm, Daemon)"
 export GLUE_DIALECT=apt
 export GLUE_ACTIVE_BACKEND=apt
 source "$ROOT_DIR/glue.sh"
@@ -282,6 +282,18 @@ repair_out=$(GLUE_DRY_RUN=true glue repair)
 assert_equals "[glue-repair] Diagnosing package manager state...
 [glue-repair] Attempting auto-repair on backend 'apt'...
 sudo dpkg --configure -a" "$repair_out" "glue repair execution"
+
+trace_out=$(GLUE_DRY_RUN=true glue trace apt install neovim)
+assert_equals "[glue-trace] Attaching eBPF call tracer...
+glue-trace-ebpf -- apt install neovim" "$trace_out" "glue trace dry-run execution"
+
+wasm_out=$(GLUE_DRY_RUN=true glue plugin list)
+assert_equals "[glue-wasm] Wasm plugin engine interface (list)...
+wasm-runtime exec --plugin list" "$wasm_out" "glue plugin dry-run execution"
+
+daemon_out=$(GLUE_DRY_RUN=true glue daemon status)
+assert_equals "[glue-daemon] Autonomous maintenance daemon service (status)...
+glue-daemon --service status" "$daemon_out" "glue daemon dry-run execution"
 
 
 # Test 8: Neutral CLI & Dialects

@@ -205,6 +205,15 @@ glue() {
         webui)
             glue_launch_webui "$@"
             ;;
+        trace)
+            glue_trace_exec "$@"
+            ;;
+        plugin)
+            glue_wasm_plugin "$@"
+            ;;
+        daemon)
+            glue_autodeamon "$@"
+            ;;
         install|remove|autoremove|update|upgrade|search|show|list|clean)
             if [[ "$cmd" == "list" && "${1:-}" == "--installed" ]]; then
                 shift
@@ -228,6 +237,9 @@ glue() {
             echo "  glue cluster [node_address]"
             echo "  glue audit"
             echo "  glue repair"
+            echo "  glue trace <command...>"
+            echo "  glue plugin [list|load|run]"
+            echo "  glue daemon [start|status|stop]"
             echo "  glue webui [port]"
             echo ""
             echo "Global Flags:"
