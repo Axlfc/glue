@@ -247,8 +247,8 @@ assert_equals "pre_install_ok" "${HOOK_TRIGGERED:-}" "Plugin pre-install hook ex
 rm -rf /tmp/glue_plugins_test /tmp/glue_plugins_test_config
 
 
-# Test 7: Advanced Subcommands (v4.0 - v9.0)
-echo "Test Group 7: Advanced Subcommands (Sync, AI, WebUI, Cluster, Audit, Repair, Trace, Wasm, Daemon, Build, Verify, Graph, Sandbox, Predict, MicroVM)"
+# Test 7: Advanced Subcommands (v4.0 - v1.0.1 LTS)
+echo "Test Group 7: Advanced Subcommands (Sync, AI, WebUI, Cluster, Audit, Repair, Trace, Wasm, Daemon, Build, Verify, Graph, Sandbox, Predict, MicroVM, Telemetry, Version)"
 export GLUE_DIALECT=apt
 export GLUE_ACTIVE_BACKEND=apt
 source "$ROOT_DIR/glue.sh"
@@ -262,7 +262,7 @@ ai_res=$(glue_ai_search "editor de texto")
 assert_equals "neovim vim nano" "$ai_res" "glue_ai_search maps natural language query"
 
 webui_out=$(GLUE_DRY_RUN=true glue webui 9090)
-assert_equals "Starting Glue Web UI Dashboard on http://localhost:9090...
+assert_equals "Starting Glue Web UI Dashboard (v1.0.1 LTS) on http://localhost:9090...
 Active Backend: apt
 Active Dialect: apt
 WebUI dry-run server ready." "$webui_out" "glue webui dry-run launch"
@@ -317,6 +317,13 @@ glue-nn-predict --check python3" "$predict_out" "glue predict dry-run execution"
 microvm_out=$(GLUE_DRY_RUN=true glue microvm apt install neovim)
 assert_equals "[glue-microvm] Spawning Firecracker microVM isolated test environment...
 firecracker-spawn --exec apt install neovim" "$microvm_out" "glue microvm dry-run execution"
+
+telemetry_out=$(glue telemetry status)
+assert_equals "[glue-telemetry] Fleet health telemetry status (v1.0.1 LTS)...
+[glue-telemetry] Status: Local metrics active (0 errors reported)." "$telemetry_out" "glue telemetry status execution"
+
+version_out=$(glue version)
+assert_equals "glue v1.0.1-lts" "$version_out" "glue version output"
 
 rm -f "$manifest_file"
 

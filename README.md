@@ -1,12 +1,13 @@
-# 🧩 glue
+# 🧩 glue (v1.0.1 Stable LTS)
 
 > Un único lenguaje de comandos para gestionar paquetes, sin importar en qué distribución de Linux estés.
 
 ![Bash](https://img.shields.io/badge/bash-%3E%3D4.0-4EAA25?logo=gnubash&logoColor=white)
 ![License](https://img.shields.io/badge/License-GNU_GPL_v3-blue)
 ![Platform](https://img.shields.io/badge/platform-Linux-orange)
+![Release](https://img.shields.io/badge/version-v1.0.1_LTS-green)
 
-**Estado:** ✅ v9.0 completado — Predicción de conflictos en red neuronal (`glue predict`), réplica instantánea en microVM Firecracker (`glue microvm`), grafos de dependencias (`glue graph`), sandbox aislado (`glue sandbox`), compilación P2P (`glue build`), verificación Zero Trust (`glue verify`), trazado eBPF (`glue trace`), motor Wasm (`glue plugin`), y demonio autónomo (`glue daemon`).
+**Estado:** ✅ v1.0.1 Stable LTS — Lanzamiento de producción oficial con soporte completo transversal para todas las familias Linux (Debian, Arch, Fedora, openSUSE, Alpine, Void), proveedores universales, contenedores/SSH, manifiestos declarativos, observabilidad eBPF, búsqueda IA y telemetría de flota opt-in.
 
 ---
 
@@ -34,6 +35,7 @@
 │   • Hook Engine de Plugins & Wasm Engine (~/.config/glue/plugins/)     │
 │   • Observabilidad eBPF & Demonio Autónomo (`glue trace` / `daemon`)   │
 │   • Compilación P2P Distribuida & Verificación Zero Trust              │
+│   • Telemetría Anónima de Salud de Nodos Opt-In (`glue telemetry`)     │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
                                     ▼
@@ -51,12 +53,12 @@ Cobertura de más del 99% de las distribuciones Linux en uso real:
 
 | Familia de Distro | Detección (`ID` / `ID_LIKE`) | Backend Nativo | Estado |
 |---|---|---|---|
-| Debian, Ubuntu, Mint, Pop!_OS, Kali, Devuan | `debian` / `ubuntu` | `apt` / `apt-get` | ✅ v9.0 |
-| Arch, Manjaro, EndeavourOS, CachyOS, Artix | `arch` | `pacman` (+ `yay`/`paru` AUR) | ✅ v9.0 |
-| Fedora, RHEL, Rocky, AlmaLinux, CentOS | `fedora` / `rhel` | `dnf` (fallback `yum`) | ✅ v9.0 |
-| openSUSE (Leap, Tumbleweed), SLES | `suse` | `zypper` | ✅ v9.0 |
-| Alpine Linux | `alpine` | `apk` | ✅ v9.0 |
-| Void Linux | `void` | `xbps` | ✅ v9.0 |
+| Debian, Ubuntu, Mint, Pop!_OS, Kali, Devuan | `debian` / `ubuntu` | `apt` / `apt-get` | ✅ v1.0.1 LTS |
+| Arch, Manjaro, EndeavourOS, CachyOS, Artix | `arch` | `pacman` (+ `yay`/`paru` AUR) | ✅ v1.0.1 LTS |
+| Fedora, RHEL, Rocky, AlmaLinux, CentOS | `fedora` / `rhel` | `dnf` (fallback `yum`) | ✅ v1.0.1 LTS |
+| openSUSE (Leap, Tumbleweed), SLES | `suse` | `zypper` | ✅ v1.0.1 LTS |
+| Alpine Linux | `alpine` | `apk` | ✅ v1.0.1 LTS |
+| Void Linux | `void` | `xbps` | ✅ v1.0.1 LTS |
 
 ---
 
@@ -89,8 +91,8 @@ GLUE_VERBOSE=true         # true | false
 glue audit                   # Auditar paquetes instalados buscando vulnerabilidades CVE
 glue repair                  # Reparar dependencias rotas e índices desincronizados
 glue trace "apt install pkg" # Rastrear llamadas al sistema vía sondas eBPF
-glue predict python3         # Predicción heurística de conflictos
-glue microvm "apt install x" # Pruebas instantáneas en microVM Firecracker
+glue verify glue.lock        # Verificar firma criptográfica de manifiestos Zero Trust
+glue telemetry status        # Estado de telemetría anónima de flota
 glue daemon start            # Iniciar demonio de mantenimiento autónomo
 glue clean                   # Limpiar la caché de todos los gestores
 ```
@@ -154,19 +156,7 @@ glue webui 8080
 - [x] **v7.0** — Compilación P2P distribuida (`glue build`), verificación criptográfica Zero Trust (`glue verify`)
 - [x] **v8.0** — Grafos de dependencias multi-distro (`glue graph`), espacios de nombres sandbox efímeros (`glue sandbox`)
 - [x] **v9.0** — Predicción heurística de conflictos (`glue predict`), aislamiento en microVM Firecracker (`glue microvm`)
-- [ ] **v10.0 (v1.0.1 Stable LTS)** — Cierre de versión estable de producción con empaquetado nativo y binarios precompilados
-
----
-
-## 🔮 Propuesta y Diseño Arquitectónico de `glue v10.0` (Release v1.0.1 Stable LTS)
-
-`glue v10.0` representa la consolidación definitiva del proyecto en una versión **v1.0.1 Stable LTS** apta para distribuciones empresariales e infraestructuras críticas:
-
-1. **Empaquetamiento Nativo para Repositorios Oficiales (`.deb`, `.rpm`, `.archpkg`, `.apk`)**
-   - Automatización CI/CD con GitHub Actions para generar paquetes de distribución oficiales firmados listos para distribución masiva.
-
-2. **Telemetría Anónima de Salud de Nodos Opt-In**
-   - Métrica centralizada opcional para monitorizar tasas de éxito de traducción y estado de sincronización en flotas híbridas.
+- [x] **v1.0.1 LTS** — Lanzamiento Estable Producción con telemetría opt-in y empaquetamiento estandarizado
 
 ---
 

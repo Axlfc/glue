@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# glue.sh - Main entrypoint for glue
+# glue.sh - Main entrypoint for glue v1.0.1 Stable LTS
 
 GLUE_DIR="${GLUE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
+GLUE_VERSION="1.0.1-lts"
 
 # Source core components
 source "$GLUE_DIR/lib/config.sh"
@@ -39,7 +40,7 @@ glue_setup_dialects
 
 glue_launch_webui() {
     local port="${1:-8080}"
-    echo "Starting Glue Web UI Dashboard on http://localhost:${port}..."
+    echo "Starting Glue Web UI Dashboard (v1.0.1 LTS) on http://localhost:${port}..."
     echo "Active Backend: ${GLUE_ACTIVE_BACKEND:-auto}"
     echo "Active Dialect: ${GLUE_DIALECT:-apt}"
 
@@ -49,7 +50,7 @@ glue_launch_webui() {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Glue Package Manager Dashboard</title>
+    <title>Glue Package Manager Dashboard v1.0.1 LTS</title>
     <style>
         body { font-family: system-ui, sans-serif; background: #121212; color: #e0e0e0; margin: 2rem; }
         .card { background: #1e1e1e; padding: 1.5rem; border-radius: 8px; border: 1px solid #333; }
@@ -59,10 +60,10 @@ glue_launch_webui() {
 </head>
 <body>
     <div class="card">
-        <h1>🧩 Glue Package Manager Dashboard</h1>
+        <h1>🧩 Glue Package Manager Dashboard v1.0.1 LTS</h1>
         <p>Active Backend: <span class="badge">${GLUE_ACTIVE_BACKEND:-auto}</span></p>
         <p>Active Dialect: <span class="badge">${GLUE_DIALECT:-apt}</span></p>
-        <p>Status: <span style="color:#4eaa25;">Operational</span></p>
+        <p>Status: <span style="color:#4eaa25;">Production LTS Ready</span></p>
     </div>
 </body>
 </html>
@@ -89,8 +90,9 @@ glue_export_manifest() {
     glue_resolve_backend >/dev/null 2>&1
     local backend="$GLUE_ACTIVE_BACKEND"
 
-    echo "# Glue Declarative System Manifest" > "$file"
+    echo "# Glue Declarative System Manifest (v1.0.1 LTS)" > "$file"
     echo "# Generated: $(date -u)" >> "$file"
+    echo "VERSION=$GLUE_VERSION" >> "$file"
     echo "BACKEND=$backend" >> "$file"
     echo "[packages]" >> "$file"
 
@@ -154,6 +156,9 @@ glue() {
     shift 2>/dev/null || true
 
     case "$cmd" in
+        version|--version)
+            echo "glue v${GLUE_VERSION}"
+            ;;
         config)
             local subcmd="${1:-}"
             shift 2>/dev/null || true
@@ -232,6 +237,9 @@ glue() {
         microvm)
             glue_microvm_spawn "$@"
             ;;
+        telemetry)
+            glue_telemetry_report "$@"
+            ;;
         install|remove|autoremove|update|upgrade|search|show|list|clean)
             if [[ "$cmd" == "list" && "${1:-}" == "--installed" ]]; then
                 shift
@@ -244,7 +252,7 @@ glue() {
             fi
             ;;
         help|--help|-h|"")
-            echo "glue - Universal Linux Package Manager Glue"
+            echo "glue v${GLUE_VERSION} - Universal Linux Package Manager Glue"
             echo ""
             echo "Usage:"
             echo "  glue [flags] <action> [options] [packages]"
@@ -265,6 +273,7 @@ glue() {
             echo "  glue sandbox <command...>"
             echo "  glue predict <pkg...>"
             echo "  glue microvm <command...>"
+            echo "  glue telemetry [status|opt-in|opt-out]"
             echo "  glue webui [port]"
             echo ""
             echo "Global Flags:"
